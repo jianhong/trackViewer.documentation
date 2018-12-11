@@ -1,0 +1,30 @@
+The IARC TP53 Database is a free service offered to the scientific community.
+
+The database copyright is vested in WHO's International Agency for Research on Cancer,
+Lyon, France [2018]. The data contained herein may be freely used, downloaded and 
+reproduced, but are not for sale or for use in conjunction with commercial or promotional 
+purposes, and provided any use shall be subject to an appropriate acknowledgement of the 
+source.
+
+When using the database, authors should cite the following publication:
+Bouaoun L, Sonkin D, Ardin M, Hollstein M, Byrnes G, Zavadil J, Olivier M.
+TP53 Variations in Human Cancers: New Lessons from the IARC TP53 Database and Genomics Data.
+Hum Mutat. 2016 Sep;37(9):865-76.
+
+The version of the database should be identified (R19, August 2018 is the latest).
+
+The data and information contained herein are provided ''as is'' and WHO/IARC makes no 
+representations or warranties, either expressed or implied, as to their accuracy, 
+completeness or suitability for a particular purpose. Similarly, WHO/IARC makes no 
+representations or warranties with regard to the non-infringement of third party 
+proprietary rights. Thus,WHO/IARC does not accept any responsibility or liability with 
+regard to the reliance on, and/or use of, such data and information.
+
+Assertions about the phenotypic effects of variants are provided by multiple sources, have 
+different levels of experimental support, and may conflict. IARC does not independently 
+verify assertions and cannot endorse their accuracy. Information obtained through this 
+resource is not a substitute for professional genetic counseling and is not intended for use 
+as the basis of medical decision making.
+
+
+http://p53.iarc.fr/DownloadDataset.aspx
