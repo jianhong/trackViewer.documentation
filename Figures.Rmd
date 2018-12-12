@@ -186,10 +186,10 @@ data <- unique(data)
 snps <- with(data, GRanges("chr17", IRanges(hg38_Chr17_coordinates, width=1), 
                            effect=factor(Effect), score=counts))
 ## set the bristles head colors of the pappus by mutation types
-snps$color <- as.numeric(snps$effect)
+snps$color <- as.numeric(snps$effect)+1
 ## parepare the legends
 legends <- list(list(labels=levels(snps$effect), 
-                     fill=seq.int(length(levels(snps$effect)))))
+                     fill=seq.int(length(levels(snps$effect)))+1))
 ## set the beak color of dandelion seeds.
 snps$border <- "gray"
 ## set plotting region
@@ -288,12 +288,13 @@ viewerStyle <- optSty$style
 for(i in c("iPSC_dC_T.RNAseq", "iPSC_mock.RNAseq")){
   setTrackStyleParam(trackList[[i]], "ylim", c(0, 20))
 }
-## adjust lollipop size
-setTrackStyleParam(trackList[["FX52_dC_T_methy"]], "ylabgp", 
-                   list(cex=trackList[["FX52_mock_methy"]]$style@ylabgp$cex, 
-                        col=trackList[["FX52_dC_T_methy"]]$style@ylabgp$col))
-setTrackStyleParam(trackList[[1]], "ylabgp", list(cex=2, col="red"))
-setTrackStyleParam(trackList[[1]], "ylabpos", "left")
+## adjust track stlyes
+setTrackStyleParam(trackList[["iPSC_mock.RNAseq"]], "color", "orange")
+setTrackStyleParam(trackList[["iPSC_mock.RNAseq"]], "ylabgp", 
+                   list(cex=trackList[["iPSC_mock.RNAseq"]]$style@ylabgp$cex,
+                        col="orange"))
+setTrackStyleParam(trackList[["FMR1"]], "ylabgp", list(cex=2, col="red"))
+setTrackStyleParam(trackList[["FMR1"]], "ylabpos", "left")
 vp <- viewTracks(trackList, gr=gr, viewerStyle=viewerStyle)
 addGuideLine(c(147911556, 147911695, 147912052, 147912111), 
              col = c("pink", "pink", "orange", "orange"), vp=vp)
