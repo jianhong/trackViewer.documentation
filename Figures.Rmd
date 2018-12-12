@@ -25,10 +25,65 @@ library(VariantAnnotation)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
 library(org.Hs.eg.db)
 library(rtracklayer)
+library(Biostrings)
+library(motifStack)
+library(knitr)
+opts_chunk$set(dev=c("pdf", "png"))
 ```
 # Figure 1
 
-```{r figure1,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("lollipop plot"), message=FALSE}
+```{r figure1,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Tracks for Sort1 exclusive exon"), message=FALSE}
+library(trackViewer) # load package
+gr <- parse2GRanges("chr3:108,476,000-108,485,000")
+gr # interesting genomic locations
+library(GenomicFeatures) # load GenomicFeatures to create TxDb from UCSC
+if(interactive()){
+    mm8KG <- makeTxDbFromUCSC(genome="mm8", tablename="knownGene")
+    saveDb(mm8KG, "mm8KG.sqlite")
+}else{## mm8KG was saved as sqlite file
+    mm8KG <- loadDb("mm8KG.sqlite")
+}
+library(org.Mm.eg.db) # load annotation database
+## create the gene model tracks information
+trs <- geneModelFromTxdb(mm8KG, org.Mm.eg.db, gr=gr)
+## import data from bedGraph/bigWig/BED ... files, see ?importScore for details
+CLIP <- importScore("CLIP.bedGraph", format="bedGraph", ranges=gr)
+control <- importScore("control.bedGraph", format="bedGraph", ranges=gr)
+knockdown <- importScore("knockdown.bedGraph", format="bedGraph", ranges=gr)
+## create styles by preset theme
+optSty <- optimizeStyle(trackList(trs, knockdown, control, CLIP), theme="col")
+trackList <- optSty$tracks
+viewerStyle <- optSty$style
+## adjust the styles for this track
+### rename the trackList for each track
+names(trackList)[1:2] <- paste0("Sort1: ", names(trackList)[1:2])
+names(trackList)[3] <- "RNA-seq TDP-43 KD"
+names(trackList)[4] <- "RNA-seq control"
+### change the lab positions for gene model track to bottomleft
+setTrackStyleParam(trackList[[1]], "ylabpos", "bottomleft")
+setTrackStyleParam(trackList[[2]], "ylabpos", "bottomleft")
+### change the color of gene model track
+setTrackStyleParam(trackList[[1]], "ylabgp", list(cex=1, col="red"))
+setTrackStyleParam(trackList[[2]], "ylabgp", list(cex=1, col="green"))
+### remove the xaxis
+setTrackViewerStyleParam(viewerStyle, "xaxis", FALSE)
+### add a scale bar in CLIP track
+setTrackXscaleParam(trackList[[5]], "draw", TRUE)
+## plot the tracks
+vp <- viewTracks(trackList, gr=gr, viewerStyle=viewerStyle)
+### add guide lines to show the range of CLIP-seq signal
+addGuideLine(c(108481252, 108481887), vp=vp)
+### add arrow mark to show the alternative splicing event
+addArrowMark(list(x=c(108483570, 108483570), 
+                  y=c(3, 4)), ##layer 3 and 4
+             label=c("Inclusive\nexon", ""), 
+             col=c("blue", "cyan"), 
+             vp=vp, quadrant=1)
+```
+
+# Figure 2
+
+```{r figure2,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("lollipop plot"), message=FALSE}
 library(trackViewer) # load package
 library(VariantAnnotation)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
@@ -112,75 +167,34 @@ lolliplot(list(mutaions=mutation.frequency, methylations=methy.mul.patient),
           legend=legends, newpage = TRUE)
 ```
 
-# Figure 2
-
-```{r figure2,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Tracks for Sort1 exclusive exon"), message=FALSE}
-library(trackViewer) # load package
-gr <- parse2GRanges("chr3:108,476,000-108,485,000")
-gr # interesting genomic locations
-library(GenomicFeatures) # load GenomicFeatures to create TxDb from UCSC
-if(interactive()){
-    mm8KG <- makeTxDbFromUCSC(genome="mm8", tablename="knownGene")
-    saveDb(mm8KG, "mm8KG.sqlite")
-}else{## mm8KG was saved as sqlite file
-    mm8KG <- loadDb("mm8KG.sqlite")
-}
-library(org.Mm.eg.db) # load annotation database
-## create the gene model tracks information
-trs <- geneModelFromTxdb(mm8KG, org.Mm.eg.db, gr=gr)
-## import data from bedGraph/bigWig/BED ... files, see ?importScore for details
-CLIP <- importScore("CLIP.bedGraph", format="bedGraph", ranges=gr)
-control <- importScore("control.bedGraph", format="bedGraph", ranges=gr)
-knockdown <- importScore("knockdown.bedGraph", format="bedGraph", ranges=gr)
-## create styles by preset theme
-optSty <- optimizeStyle(trackList(trs, knockdown, control, CLIP), theme="col")
-trackList <- optSty$tracks
-viewerStyle <- optSty$style
-## adjust the styles for this track
-### rename the trackList for each track
-names(trackList)[1:2] <- paste0("Sort1: ", names(trackList)[1:2])
-names(trackList)[3] <- "RNA-seq TDP-43 KD"
-names(trackList)[4] <- "RNA-seq control"
-### change the lab positions for gene model track to bottomleft
-setTrackStyleParam(trackList[[1]], "ylabpos", "bottomleft")
-setTrackStyleParam(trackList[[2]], "ylabpos", "bottomleft")
-### change the color of gene model track
-setTrackStyleParam(trackList[[1]], "ylabgp", list(cex=1, col="red"))
-setTrackStyleParam(trackList[[2]], "ylabgp", list(cex=1, col="green"))
-### remove the xaxis
-setTrackViewerStyleParam(viewerStyle, "xaxis", FALSE)
-### add a scale bar in CLIP track
-setTrackXscaleParam(trackList[[5]], "draw", TRUE)
-## plot the tracks
-vp <- viewTracks(trackList, gr=gr, viewerStyle=viewerStyle)
-### add guide lines to show the range of CLIP-seq signal
-addGuideLine(c(108481252, 108481887), vp=vp)
-### add arrow mark to show the alternative splicing event
-addArrowMark(list(x=c(108483570, 108483570), 
-                  y=c(3, 4)), 
-             label=c("Inclusive\nexon", ""), 
-             col=c("blue", "cyan"), 
-             vp=vp, quadrant=1)
-```
 
 # Figure 3 
 
 TP53 mutations were downloaded from http://p53.iarc.fr/DownloadDataset.aspx.
 ```{r figure3,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Dandelion plot"), message=FALSE}
 library(trackViewer) #load package
-data <- read.delim("IARC-TP53/datasets/somaticMutationDataIARC TP53 Database, R19.txt")
+## loading data.
+data <- read.delim("IARC-TP53/datasets/somaticMutationDataIARC TP53 Database, R19.txt", 
+                   stringsAsFactors = FALSE)
 data <- data[data$Morphology %in% "Small cell carcinoma, NOS" & 
                  data$Effect %in% c("nonsense", "missense", "silent", "intronic"), 
              c("hg38_Chr17_coordinates", "g_description_GRCh38", "Effect")]
 counts <- table(data$g_description_GRCh38)
 data$counts <- as.numeric(counts[data$g_description_GRCh38])
 data <- unique(data)
-snps <- with(data, GRanges("chr17", IRanges(hg38_Chr17_coordinates, width=1), effect=Effect, score=counts))
+## prepare a GRanges object for mutations
+snps <- with(data, GRanges("chr17", IRanges(hg38_Chr17_coordinates, width=1), 
+                           effect=factor(Effect), score=counts))
+## set the bristles head colors of the pappus by mutation types
 snps$color <- as.numeric(snps$effect)
+## parepare the legends
 legends <- list(list(labels=levels(snps$effect), 
                      fill=seq.int(length(levels(snps$effect)))))
+## set the beak color of dandelion seeds.
 snps$border <- "gray"
-gr <- GRanges("chr17", IRanges(7669000, 7677500))
+## set plotting region
+gr <- GRanges("chr17", IRanges(7669000, 7677000))
+## extract transcripts in the range
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
 trs <- geneModelFromTxdb(TxDb.Hsapiens.UCSC.hg38.knownGene, 
@@ -188,14 +202,17 @@ trs <- geneModelFromTxdb(TxDb.Hsapiens.UCSC.hg38.knownGene,
 ## subset the features to show the interested transcripts only
 features <- c(trs[[1]]$dat, trs[[3]]$dat, trs[[4]]$dat)
 lens <- sapply(trs[c(1, 3, 4)], function(.e) length(.e$dat))
+## define the feature legend name
 names(features) <- rep(names(trs)[c(1, 3, 4)], lens)
 ## define the feature track layers
 features$featureLayerID <- rep(seq.int(3), lens)
 ## define the feature colors
 features$fill <- rep(c("lightblue", "mistyrose", "orange"), lens)
-features$height <- 0.02
+## define the feature heights
+features$height <- ifelse(features$feature=="CDS", 0.02, 0.01)
+## plot, use mean function to calculate the height of beak of dandelion seeds.
 dandelion.plot(snps, features, ranges=gr, legend = legends, type="circle",
-               heightMethod = mean, yaxis = TRUE, ylab='mean of mutation scores')
+               heightMethod = mean, yaxis = TRUE, ylab='mean of mutation counts')
 ```
 
 # Figure 4
@@ -203,6 +220,81 @@ dandelion.plot(snps, features, ranges=gr, legend = legends, type="circle",
 FMR1 methylation and expression (GSE108577)
 
 ```{r figure4,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Visualization of mutations/SNPs and RNA-seq data together"), message=FALSE}
-
+library(trackViewer) #load package
+library(Biostrings)
+library(motifStack)
+motif <- importMatrix("TET1.PWM.txt", format = "cisbp") ## motif was downloaded from cis-bp
+pwm <- pfm2pwm(motif[[1]])
+fa <- readDNAStringSet("FMR1.ups3K.dws3K.fasta")
+names(fa) <- "FMR1"
+TET1.binding.sites.v <- matchPWM(pwm, subject = fa[[1]], 
+                                 min.score = "95%", with.score = TRUE)
+TET1.binding.sites <- shift(ranges(TET1.binding.sites.v), shift = 147908950)
+TET1.binding.sites <- GRanges("chrX", TET1.binding.sites, strand = "+", 
+                              score=mcols(TET1.binding.sites.v)$score)
+width(TET1.binding.sites) <- 1
+TET1.binding.sites$border <- "gray80"
+TET1.binding.sites$color <- 3
+TET1.binding.sites <- new("track", dat=TET1.binding.sites, type="lollipopData")
+gr <- GRanges("chrX", IRanges(147910000, 147915000))
+## extract transcripts in the range
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
+FMR1 <- geneTrack(get("FMR1", org.Hs.egSYMBOL2EG), TxDb.Hsapiens.UCSC.hg38.knownGene)[[1]]
+FMR1$dat2 <- GRanges("chrX", 
+                     IRanges(c(147911604, 147911617, 147911727, 147911743, 147911758, 
+                               147911768, 147911810, 147911821, 147911854, 147911877,
+                               147911882, 147911902, 147911963), width = 1, 
+                             names = c("AP2", "UBP1", "Sp1", "Sp1", "NRF1", 
+                                       "Sp1", "AGP", "NRF1", "Sp1", "AP2", 
+                                       "Sp1-like", "Myc", "Zeste")))
+FMR1$dat2$color <- as.numeric(factor(names(FMR1$dat2)))
+FMR1$dat2$cex <- .8
+## add methylation counts
+maxX <- GRanges("chrX", IRanges(147911550, width=1), score=9, 
+                color="white", border="white")
+FX52_mock_methy <- GRanges("chrX", IRanges(147911556+seq.int(35)*4, width=1),
+                     score=c(8, 8, 8, 7, 8, 9, 9, 9, 8, 9, 9, 9, 9, 8, 9,
+                             9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+                             9, 9, 9, 8, 9), color=5, border="gray")
+FX52_mock_methy <- new("track", dat=c(FX52_mock_methy, maxX), type="lollipopData")
+FX52_dC_T_methy <- GRanges("chrX", IRanges(147911556+seq.int(35)*4, width=1),
+                     score=c(3, 5, 3, 2, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 0,
+                             0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
+                             0, 1, 0, 0, 1), color=4, border="gray")
+FX52_dC_T_methy <- new("track", dat=c(FX52_dC_T_methy, maxX), type="lollipopData")
+## import RNA-seq tracks
+iPSC_dC_T.RNAseq <- importScore("iPSC_dC-T.bw", ranges = gr, format = "BigWig") 
+iPSC_mock.RNAseq <- importScore("iPSC_mock.bw", ranges = gr, format = "BigWig")
+## import ChIP-Bisulfite-Seq tracks
+iPSC_dC_T.BSseq <- iPSC_dC_T.RNAseq
+iPSC_dC_dT.BSseq <- iPSC_mock.RNAseq
+#iPSC_dC_T.BSseq <- importScore("iPSC_dC-T.bs.bw", ranges = gr, format = "BigWig")
+#iPSC_dC_dT.BSseq <- importScore("iPSC_dC-dT.bs.bw", ranges = gr, format = "BigWig")
+## optimize stlye
+optSty <- optimizeStyle(trackList(FMR1, TET1.binding.sites,
+                                  FX52_dC_T_methy, FX52_mock_methy, 
+                                  iPSC_dC_T.RNAseq, iPSC_mock.RNAseq, 
+                                  iPSC_dC_T.BSseq, iPSC_dC_dT.BSseq, 
+                                  heightDist=c(2, 1, 1, 1, 1, 1, 1, 1)), 
+                        theme="col")
+trackList <- optSty$tracks
+viewerStyle <- optSty$style
+## adjust y scale
+for(i in c("iPSC_dC_T.RNAseq", "iPSC_mock.RNAseq")){
+  setTrackStyleParam(trackList[[i]], "ylim", c(0, 20))
+}
+## adjust lollipop size
+setTrackStyleParam(trackList[["FX52_dC_T_methy"]], "ylabgp", 
+                   list(cex=trackList[["FX52_mock_methy"]]$style@ylabgp$cex, 
+                        col=trackList[["FX52_dC_T_methy"]]$style@ylabgp$col))
+setTrackStyleParam(trackList[[1]], "ylabgp", list(cex=2, col="red"))
+setTrackStyleParam(trackList[[1]], "ylabpos", "left")
+vp <- viewTracks(trackList, gr=gr, viewerStyle=viewerStyle)
+addGuideLine(c(147911556, 147911695, 147912052, 147912111), 
+             col = c("pink", "pink", "orange", "orange"), vp=vp)
+addArrowMark(pos = list(x=c(147911626, 147912070), y=c(4, 3)), 
+             label = c("CpG island", "(CGG)n"),
+             col = c("pink", "orange"), vp=vp)
 ```
 
