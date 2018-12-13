@@ -305,9 +305,9 @@ setTrackStyleParam(trackList[["FMR1"]], "ylabgp", list(cex=2, col="red"))
 setTrackStyleParam(trackList[["FMR1"]], "ylabpos", "left")
 vp <- viewTracks(trackList, gr=gr, viewerStyle=viewerStyle)
 addGuideLine(c(147911556, 147911695, 147912052, 147912111), 
-             col = c("pink", "pink", "blue", "blue"), vp=vp)
+             col = c("#CC79A7", "#CC79A7", "#0072B2", "#0072B2"), vp=vp)
 addArrowMark(pos = list(x=c(147911626, 147912070), y=c(4, 1)), 
              label = c("CpG island", "(CGG)n"),
-             col = c("pink", "blue"), vp=vp)
+             col = c("#CC79A7", "#0072B2"), vp=vp)
 ```
 
