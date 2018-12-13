@@ -28,7 +28,9 @@ library(rtracklayer)
 library(Biostrings)
 library(motifStack)
 library(knitr)
-opts_chunk$set(dev=c("pdf", "png"))
+if(Sys.getenv("USER")=="jianhongou"){
+  opts_chunk$set(dev=c("pdf", "png"))
+}
 ```
 # Figure 1
 
