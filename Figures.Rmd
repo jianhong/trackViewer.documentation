@@ -268,6 +268,7 @@ FX52_dC_T_methy <- GRanges("chrX", IRanges(147911556+seq.int(35)*4, width=1),
                      score=c(3, 5, 3, 2, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 0,
                              0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
                              0, 1, 0, 0, 1), color=4, border="gray")
+FX52_dC_T_methy$color[FX52_dC_T_methy$score==0] <- "white"
 FX52_dC_T_methy <- new("track", dat=c(FX52_dC_T_methy, maxX), type="lollipopData")
 ## import RNA-seq tracks
 iPSC_dC_T.RNAseq <- importScore("iPSC_dC-T.bw", ranges = gr, format = "BigWig") 
@@ -275,6 +276,9 @@ iPSC_mock.RNAseq <- importScore("iPSC_mock.bw", ranges = gr, format = "BigWig")
 ## import ChIP-Bisulfite-Seq tracks
 iPSC_dC_T.BSseq <- importScore("IPSC_dC-T.methy.bedGraph", "IPSC_dC-T.demethy.bedGraph", ranges = gr, format = "bedGraph")
 iPSC_dC_dT.BSseq <- importScore("IPSC_dC-dT.methy.bedGraph", "IPSC_dC-dT.demethy.bedGraph", ranges = gr, format = "bedGraph")
+##stronger the signals
+width(iPSC_dC_T.BSseq$dat) <- width(iPSC_dC_T.BSseq$dat) + 1
+width(iPSC_dC_dT.BSseq$dat) <- width(iPSC_dC_dT.BSseq$dat) + 1
 ## optimize stlye
 optSty <- optimizeStyle(trackList(FMR1, TET1.binding.sites,
                                   FX52_dC_T_methy, FX52_mock_methy, 
@@ -295,7 +299,6 @@ setTrackStyleParam(trackList[["iPSC_dC_T.BSseq"]], "ylabgp",
                         col="orange"))
 setTrackStyleParam(trackList[["iPSC_dC_dT.BSseq"]], "color", c("#E69F00", "pink"))
 setTrackStyleParam(trackList[["FMR1"]], "ylabgp", list(cex=2, col="red"))
-setTrackStyleParam(trackList[["FMR1"]], "ylabpos", "left")
 vp <- viewTracks(trackList, gr=gr, viewerStyle=viewerStyle)
 addGuideLine(c(147911556, 147911695, 147912052, 147912111), 
              col = c("#CC79A7", "#CC79A7", "#0072B2", "#0072B2"), vp=vp)
