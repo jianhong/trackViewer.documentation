@@ -240,7 +240,7 @@ TET1.binding.sites$color <- 3
 ## set lollipop plot type to pin.
 TET1.binding.sites$type <- "pin"
 TET1.binding.sites <- new("track", dat=TET1.binding.sites, type="lollipopData")
-gr <- GRanges("chrX", IRanges(147910000, 147915000))
+gr <- GRanges("chrX", IRanges(147910500, 147914000))
 ## extract transcripts in the range
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
