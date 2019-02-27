@@ -10,7 +10,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-figure.cap.id <- c("1A", "1B", "1C", "2")
+figure.cap.id <- c("1A", "1B", "1C", "1D")
 fn = local({
     i = 0
     function(x, cnt=TRUE){
@@ -221,7 +221,7 @@ dandelion.plot(snps, features, ranges=gr, legend = legends, type="circle",
 
 FMR1 methylation and expression (GSE108577)
 
-```{r figure2,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Visualization of mutations/SNPs and RNA-seq data together"), message=FALSE}
+```{r figure1D,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Visualization of mutations/SNPs and RNA-seq data together"), message=FALSE}
 library(trackViewer) #load package
 library(Biostrings)
 library(motifStack)
