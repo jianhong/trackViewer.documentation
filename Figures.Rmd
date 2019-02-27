@@ -10,7 +10,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-figure.cap.id <- c("1", "2", "3", "4")
+figure.cap.id <- c("1A", "1B", "1C", "2")
 fn = local({
     i = 0
     function(x, cnt=TRUE){
@@ -32,9 +32,9 @@ if(Sys.getenv("USER")=="jianhongou"){
   opts_chunk$set(dev=c("pdf", "png"))
 }
 ```
-# Figure 1
+# Figure 1A
 
-```{r figure1,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Tracks for Sort1 exclusive exon"), message=FALSE}
+```{r figure1A,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Tracks for Sort1 exclusive exon"), message=FALSE}
 library(trackViewer) # load package
 gr <- parse2GRanges("chr3:108,476,000-108,485,000")
 gr # interesting genomic locations
@@ -83,9 +83,9 @@ addArrowMark(list(x=c(108483570, 108483570),
              vp=vp, quadrant=1)
 ```
 
-# Figure 2
+# Figure 1B
 
-```{r figure2,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("lollipop plot"), message=FALSE}
+```{r figure1B,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("lollipop plot"), message=FALSE}
 library(trackViewer) # load package
 library(VariantAnnotation)
 library(TxDb.Hsapiens.UCSC.hg19.knownGene)
@@ -170,10 +170,10 @@ lolliplot(list(mutaions=mutation.frequency, methylations=methy.mul.patient),
 ```
 
 
-# Figure 3 
+# Figure 1C 
 
 TP53 mutations were downloaded from http://p53.iarc.fr/DownloadDataset.aspx.
-```{r figure3,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Dandelion plot"), message=FALSE}
+```{r figure1C,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Dandelion plot"), message=FALSE}
 library(trackViewer) #load package
 ## loading data.
 data <- read.delim("IARC-TP53/datasets/somaticMutationDataIARC TP53 Database, R19.txt", 
@@ -217,11 +217,11 @@ dandelion.plot(snps, features, ranges=gr, legend = legends, type="circle",
                heightMethod = mean, yaxis = TRUE, ylab='mean of mutation counts')
 ```
 
-# Figure 4
+# Figure 2
 
 FMR1 methylation and expression (GSE108577)
 
-```{r figure4,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Visualization of mutations/SNPs and RNA-seq data together"), message=FALSE}
+```{r figure2,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Visualization of mutations/SNPs and RNA-seq data together"), message=FALSE}
 library(trackViewer) #load package
 library(Biostrings)
 library(motifStack)
