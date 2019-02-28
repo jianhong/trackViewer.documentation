@@ -217,7 +217,7 @@ dandelion.plot(snps, features, ranges=gr, legend = legends, type="circle",
                heightMethod = mean, yaxis = TRUE, ylab='mean of mutation counts')
 ```
 
-# Figure 2
+# Figure 1D
 
 FMR1 methylation and expression (GSE108577)
 
