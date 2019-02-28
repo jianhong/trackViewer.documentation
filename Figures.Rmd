@@ -274,8 +274,8 @@ FX52_dC_T_methy <- new("track", dat=c(FX52_dC_T_methy, maxX), type="lollipopData
 iPSC_dC_T.RNAseq <- importScore("iPSC_dC-T.bw", ranges = gr, format = "BigWig") 
 iPSC_mock.RNAseq <- importScore("iPSC_mock.bw", ranges = gr, format = "BigWig")
 ## import ChIP-Bisulfite-Seq tracks
-iPSC_dC_T.BSseq <- importScore("IPSC_dC-T.methy.bedGraph", "IPSC_dC-T.demethy.bedGraph", ranges = gr, format = "bedGraph")
-iPSC_dC_dT.BSseq <- importScore("IPSC_dC-dT.methy.bedGraph", "IPSC_dC-dT.demethy.bedGraph", ranges = gr, format = "bedGraph")
+iPSC_dC_T.BSseq <- importScore("IPSC_dC-T.methy.bedgraph", "IPSC_dC-T.demethy.bedgraph", ranges = gr, format = "bedGraph")
+iPSC_dC_dT.BSseq <- importScore("IPSC_dC-dT.methy.bedgraph", "IPSC_dC-dT.demethy.bedgraph", ranges = gr, format = "bedGraph")
 ##stronger the signals
 width(iPSC_dC_T.BSseq$dat) <- width(iPSC_dC_T.BSseq$dat) + 1
 width(iPSC_dC_dT.BSseq$dat) <- width(iPSC_dC_dT.BSseq$dat) + 1
