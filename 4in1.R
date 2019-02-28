@@ -39,6 +39,9 @@ setTrackStyleParam(trackList[[5]], "ylim", c(0, 80))
 setTrackViewerStyleParam(viewerStyle, "xaxis", FALSE)
 ### add a scale bar in CLIP track
 setTrackXscaleParam(trackList[[5]], "draw", TRUE)
+setTrackXscaleParam(trackList[[5]], "label", "1000 bp")
+setTrackXscaleParam(trackList[[5]], "from", new("pos", x=108478000, y=40, unit="native"))
+setTrackXscaleParam(trackList[[5]], "to", new("pos", x=108479000, y=40, unit="native"))
 ## plot the tracks
 trackList1A <- trackList
 gr1A <- gr
