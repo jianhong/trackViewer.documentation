@@ -170,58 +170,11 @@ lolliplot(list(mutaions=mutation.frequency, methylations=methy.mul.patient),
 ```
 
 
-# Figure 1C 
-
-TP53 mutations were downloaded from http://p53.iarc.fr/DownloadDataset.aspx.
-```{r figure1C,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Dandelion plot"), message=FALSE}
-library(trackViewer) #load package
-## loading data.
-data <- read.delim("IARC-TP53/datasets/somaticMutationDataIARC TP53 Database, R19.txt", 
-                   stringsAsFactors = FALSE)
-data <- data[data$Morphology %in% "Small cell carcinoma, NOS" & 
-                 data$Effect %in% c("nonsense", "missense", "silent", "intronic"), 
-             c("hg38_Chr17_coordinates", "g_description_GRCh38", "Effect")]
-counts <- table(data$g_description_GRCh38)
-data$counts <- as.numeric(counts[data$g_description_GRCh38])
-data <- unique(data)
-## prepare a GRanges object for mutations
-snps <- with(data, GRanges("chr17", IRanges(hg38_Chr17_coordinates, width=1), 
-                           effect=factor(Effect), score=counts))
-## set the bristles head colors of the pappus by mutation types
-snps$color <- as.numeric(snps$effect)+1
-## parepare the legends
-legends <- list(list(labels=levels(snps$effect), 
-                     fill=seq.int(length(levels(snps$effect)))+1))
-## set the beak color of dandelion seeds.
-snps$border <- "gray"
-## set plotting region
-gr <- GRanges("chr17", IRanges(7669000, 7677000))
-## extract transcripts in the range
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-library(org.Hs.eg.db)
-trs <- geneModelFromTxdb(TxDb.Hsapiens.UCSC.hg38.knownGene, 
-                         org.Hs.eg.db, gr=gr)
-## subset the features to show the interested transcripts only
-features <- c(trs[[1]]$dat, trs[[3]]$dat, trs[[4]]$dat)
-lens <- sapply(trs[c(1, 3, 4)], function(.e) length(.e$dat))
-## define the feature legend name
-names(features) <- rep(names(trs)[c(1, 3, 4)], lens)
-## define the feature track layers
-features$featureLayerID <- rep(seq.int(3), lens)
-## define the feature colors
-features$fill <- rep(c("lightblue", "mistyrose", "orange"), lens)
-## define the feature heights
-features$height <- ifelse(features$feature=="CDS", 0.02, 0.01)
-## plot, use mean function to calculate the height of beak of dandelion seeds.
-dandelion.plot(snps, features, ranges=gr, legend = legends, type="circle",
-               heightMethod = mean, yaxis = TRUE, ylab='mean of mutation counts')
-```
-
-# Figure 1D
+# Figure 1C
 
 FMR1 methylation and expression (GSE108577)
 
-```{r figure1D,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Visualization of mutations/SNPs and RNA-seq data together"), message=FALSE}
+```{r figure1C,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Visualization of mutations/SNPs and RNA-seq data together"), message=FALSE}
 library(trackViewer) #load package
 library(Biostrings)
 library(motifStack)
@@ -307,3 +260,50 @@ addArrowMark(pos = list(x=c(147911626, 147912070), y=c(4, 1)),
              col = c("#CC79A7", "#0072B2"), vp=vp)
 ```
 
+
+# Figure 1D
+
+TP53 mutations were downloaded from http://p53.iarc.fr/DownloadDataset.aspx.
+```{r figure1D,fig.width=12,fig.height=8,dpi=300,fig.cap=fn("Dandelion plot"), message=FALSE}
+library(trackViewer) #load package
+## loading data.
+data <- read.delim("IARC-TP53/datasets/somaticMutationDataIARC TP53 Database, R19.txt", 
+                   stringsAsFactors = FALSE)
+data <- data[data$Morphology %in% "Small cell carcinoma, NOS" & 
+                 data$Effect %in% c("nonsense", "missense", "silent", "intronic"), 
+             c("hg38_Chr17_coordinates", "g_description_GRCh38", "Effect")]
+counts <- table(data$g_description_GRCh38)
+data$counts <- as.numeric(counts[data$g_description_GRCh38])
+data <- unique(data)
+## prepare a GRanges object for mutations
+snps <- with(data, GRanges("chr17", IRanges(hg38_Chr17_coordinates, width=1), 
+                           effect=factor(Effect), score=counts))
+## set the bristles head colors of the pappus by mutation types
+snps$color <- as.numeric(snps$effect)+1
+## parepare the legends
+legends <- list(list(labels=levels(snps$effect), 
+                     fill=seq.int(length(levels(snps$effect)))+1))
+## set the beak color of dandelion seeds.
+snps$border <- "gray"
+## set plotting region
+gr <- GRanges("chr17", IRanges(7669000, 7677000))
+## extract transcripts in the range
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
+trs <- geneModelFromTxdb(TxDb.Hsapiens.UCSC.hg38.knownGene, 
+                         org.Hs.eg.db, gr=gr)
+## subset the features to show the interested transcripts only
+features <- c(trs[[1]]$dat, trs[[3]]$dat, trs[[4]]$dat)
+lens <- sapply(trs[c(1, 3, 4)], function(.e) length(.e$dat))
+## define the feature legend name
+names(features) <- rep(names(trs)[c(1, 3, 4)], lens)
+## define the feature track layers
+features$featureLayerID <- rep(seq.int(3), lens)
+## define the feature colors
+features$fill <- rep(c("lightblue", "mistyrose", "orange"), lens)
+## define the feature heights
+features$height <- ifelse(features$feature=="CDS", 0.02, 0.01)
+## plot, use mean function to calculate the height of beak of dandelion seeds.
+dandelion.plot(snps, features, ranges=gr, legend = legends, type="circle",
+               heightMethod = mean, yaxis = TRUE, ylab='mean of mutation counts')
+```
