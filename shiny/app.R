@@ -9,6 +9,7 @@
 
 library(shiny)
 library(trackViewer)
+# trackViewer version must be no less than 1.19.9
 
 ## data folder is used to save the data for ploting
 datafolder <- "data"
