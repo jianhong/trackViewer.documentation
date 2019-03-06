@@ -64,9 +64,11 @@ server <- function(input, output) {
    plot <- renderbrowseTracks({
      if(!global$refresh) return()
      gr <- GRanges(input$chr, IRanges(as.numeric(input$start), as.numeric(input$end)))
+     gr.UCSC <- gr
+     seqlevelsStyle(gr.UCSC) <- "UCSC"
      require(input$TxDb, character.only = TRUE)
      require(input$org, character.only = TRUE)
-     trs <- tryCatch(geneModelFromTxdb(get(input$TxDb), get(input$org), gr=gr), 
+     trs <- tryCatch(geneModelFromTxdb(get(input$TxDb), get(input$org), gr=gr.UCSC), 
                      error = function(e){ NULL })
      tks <- list()
      if(global$fileIndex>0){
@@ -81,7 +83,8 @@ server <- function(input, output) {
      if(global$lolliIndex>0){
        for(i in seq.int(global$lolliIndex)){
          if(input[[paste0("lolliformat", i)]]=="VCF"){
-           tab <- TabixFile(file.path(datafolder, input[[paste0("lollifile", i)]]))
+           fl <- file.path(datafolder, input[[paste0("lollifile", i)]])
+           tab <- TabixFile(fl)
            gen <- strsplit(input$TxDb, "\\.")[[1]]
            gen <- gen[length(gen)-1]
            vcf <- readVcf(fl, genome=gen, param = gr)
@@ -154,7 +157,7 @@ server <- function(input, output) {
        optSty <- optimizeStyle(trackList, theme="col")
        trackList <- optSty$tracks
        viewerStyle <- optSty$style
-       browseTracks(trackList, gr=gr)
+       browseTracks(trackList, gr=gr.UCSC)
      }
    })
    output$trackViewer <- plot
