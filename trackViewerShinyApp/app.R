@@ -11,8 +11,8 @@ library(shiny)
 library(rtracklayer)
 library(VariantAnnotation)
 library(trackViewer)
-# trackViewer version must be no less than 1.19.10
-stopifnot(packageVersion("trackViewer")>="1.19.10")
+# trackViewer version must be no less than 1.19.11
+stopifnot(packageVersion("trackViewer")>="1.19.11")
 
 ## data folder is used to save the data for ploting
 datafolder <- "data"
@@ -107,7 +107,7 @@ server <- function(input, output, session) {
          mutation.frequency$score <- rep(1, length(mutation.frequency))
        }
        if(length(mutation.frequency$name)>0){
-         names(mutation.frequency) <- mutation.frequency$name
+         names(mutation.frequency) <- make.names(mutation.frequency$name)
        }
        mutation.frequency
      }
@@ -190,7 +190,7 @@ server <- function(input, output, session) {
                features$featureLayerID <- as.numeric(levels(features$gene))
              }
              if(length(features$transcript)>0){
-               names(features) <- features$transcript
+               names(features) <- make.names(features$transcript)
              }
              thislolli$dat <- features
            }
