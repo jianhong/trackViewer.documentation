@@ -91,19 +91,20 @@ server <- function(input, output) {
            if(length(mutation.frequency$score)==0){
              mutation.frequency$score <- mutation.frequency$AF*100
            }
-           seqlevelsStyle(mutation.frequency) <- "UCSC"
-           thislolli <- new("track", dat=mutation.frequency, 
-                            name=input[[paste0("lollisample", i)]], 
-                            type="lollipopData")
          }else{
-           thislolli <- 
-             tryCatch(importScore(file = file.path(datafolder, input[[paste0("lollifile", i)]]),
-                                  format = input[[paste0("lolliformat", i)]],
-                                  ranges = gr),
-                      error = function(e){ NULL })
+           mutation.frequency <- import(con = file.path(datafolder, input[[paste0("lollifile", i)]]),
+                                        format = input[[paste0("lolliformat", i)]],
+                                        which = gr)
+           if(length(mutation.frequency$itemRgb)>0) mutation.frequency$color <- mutation.frequency$itemRgb
+           if(length(mutation.frequency$score)==0){
+             mutation.frequency$score <- 1
+           }
          }
-         thislolli$dat <- promoters(thislolli$dat, upstream = 0, downstream = 1)
-         thislolli$type <- "lollipopData"
+         mutation.frequency <- promoters(mutation.frequency, upstream = 0, downstream = 1)
+         seqlevelsStyle(mutation.frequency) <- "UCSC"
+         thislolli <- new("track", dat=mutation.frequency, 
+                          name=input[[paste0("lollisample", i)]], 
+                          type="lollipopData")
          if(input[[paste0("lolliradio", i)]]!="none"){
            if(input[[paste0("lolliradio", i)]]=="default"){
              if(length(trs)>0){
@@ -179,7 +180,7 @@ server <- function(input, output) {
                 tags$h4("Add lollipop plot track from file"),
                 selectInput(paste0("lollifile", global$lolliIndex), label="select file",
                             choices = dir(datafolder), multiple = FALSE),
-                selectInput(paste0("lolliformat", global$lolliIndex), label="file format", choices = c("BED", "bedGraph", "BigWig")),
+                selectInput(paste0("lolliformat", global$lolliIndex), label="file format", choices = c("BED", "bedGraph", "VCF")),
                 textInput(paste0("lollisample", global$lolliIndex), label = "sample name", value = ""),
                 radioButtons(paste0("lolliradio", global$lolliIndex), label = "gene model",
                              choices = c("none"="none",
