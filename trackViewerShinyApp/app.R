@@ -74,18 +74,18 @@ server <- function(input, output, session) {
      gr.NCBI <- gr.UCSC <- gr
      seqlevelsStyle(gr.UCSC) <- "UCSC"
      seqlevelsStyle(gr.NCBI) <- "NCBI"
-     progress$set(message="loading library", value=3)
+     progress$set(message="loading library", value=0.03)
      require(input$TxDb, character.only = TRUE)
      require(input$org, character.only = TRUE)
-     progress$set(message="get transcripts", value=5)
+     progress$set(message="get transcripts", value=0.05)
      trs <- tryCatch(geneModelFromTxdb(get(input$TxDb), get(input$org), gr=gr.UCSC), 
                      error = function(e){ NULL })
-     progress$set(message="reading track data", value=15)
+     progress$set(message="reading track data", value=0.15)
      tks <- list()
-     step = 80/(global$fileIndex+global$lolliIndex)
+     step = 0.8/(global$fileIndex+global$lolliIndex)
      if(global$fileIndex>0){
        for(i in seq.int(global$fileIndex)){
-         progress$set(message="reading track data", value=15+i*step)
+         progress$set(message="reading track data", value=0.15+i*step)
          tks[[input[[paste0("sample", i)]]]] <- 
            tryCatch( importScore(file = file.path(datafolder, input[[paste0("file", i)]]),
                                  format = input[[paste0("format", i)]],
@@ -110,7 +110,7 @@ server <- function(input, output, session) {
      }
      if(global$lolliIndex>0){
        for(i in seq.int(global$lolliIndex)){
-         progress$set(message="reading track data", value=15+global$fileIndex*step+i*step)
+         progress$set(message="reading track data", value=0.15+global$fileIndex*step+i*step)
          mutation.frequency <- switch(input[[paste0("lolliformat", i)]],
                                       "VCF"={
                                         fl <- file.path(datafolder, input[[paste0("lollifile", i)]])
@@ -183,7 +183,12 @@ server <- function(input, output, session) {
              if(length(features$feature)<1){
                features$feature <- "CDS"
              }
-             features$featureLayerID <- as.numeric(levels(features$gene))
+             if(length(features$featureLayerID)==0){
+               features$featureLayerID <- as.numeric(levels(features$gene))
+             }
+             if(length(features$transcript)>0){
+               features$textlabel <- features$transcript
+             }
              thislolli$dat <- features
            }
          }
@@ -201,7 +206,7 @@ server <- function(input, output, session) {
        trackList <- trackList(trs, tks, heightDist = c(1, length(tks)))
      }
      
-     progress$set(message="Plot data", value=95)
+     progress$set(message="Plot data", value=0.95)
      on.exit(progress$close())
      
      if(length(trackList)>0){
@@ -245,7 +250,7 @@ server <- function(input, output, session) {
                                          "load from following file"="file")),
                 selectInput(paste0("lollitxfile", global$lolliIndex), label="select transcript file",
                             choices = dir(datafolder, "bed|bedgraph|gff|gtf", ignore.case = TRUE), multiple = FALSE),
-                selectInput(paste0("lollitxformat", global$lolliIndex), label="transcript file format", choices = c("GFF", "bedGraph", "BED")),
+                selectInput(paste0("lollitxformat", global$lolliIndex), label="transcript file format", choices = c("GTF", "GFF", "bedGraph", "BED")),
                 tags$hr()
               ))
    })
