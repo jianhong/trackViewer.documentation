@@ -106,6 +106,9 @@ server <- function(input, output, session) {
        if(length(mutation.frequency$score)==0){
          mutation.frequency$score <- rep(1, length(mutation.frequency))
        }
+       if(length(mutation.frequency$name)>0){
+         names(mutation.frequency) <- mutation.frequency$name
+       }
        mutation.frequency
      }
      if(global$lolliIndex>0){
@@ -187,7 +190,7 @@ server <- function(input, output, session) {
                features$featureLayerID <- as.numeric(levels(features$gene))
              }
              if(length(features$transcript)>0){
-               features$textlabel <- features$transcript
+               names(features) <- features$transcript
              }
              thislolli$dat <- features
            }
