@@ -169,7 +169,7 @@ server <- function(input, output) {
               ui = tagList(
                 tags$h4("Add data track from file"),
                 selectInput(paste0("file", global$fileIndex), label="select file",
-                            choices = dir(datafolder), multiple = FALSE),
+                            choices = dir(datafolder, "bed|bedgraph|bw|bigwig", ignore.case = TRUE), multiple = FALSE),
                 selectInput(paste0("format", global$fileIndex), label="file format", choices = c("BED", "bedGraph", "BigWig")),
                 textInput(paste0("sample", global$fileIndex), label = "sample name", value = ""),
                 tags$hr()
@@ -182,7 +182,7 @@ server <- function(input, output) {
               ui = tagList(
                 tags$h4("Add lollipop plot track from file"),
                 selectInput(paste0("lollifile", global$lolliIndex), label="select file",
-                            choices = dir(datafolder), multiple = FALSE),
+                            choices = dir(datafolder, "bed|bedgraph|vcf", ignore.case = TRUE), multiple = FALSE),
                 selectInput(paste0("lolliformat", global$lolliIndex), label="file format", choices = c("BED", "bedGraph", "VCF")),
                 textInput(paste0("lollisample", global$lolliIndex), label = "sample name", value = ""),
                 radioButtons(paste0("lolliradio", global$lolliIndex), label = "gene model",
@@ -190,7 +190,7 @@ server <- function(input, output) {
                                          "use TxDb package"="default",
                                          "load from following file"="file")),
                 selectInput(paste0("lollitxfile", global$lolliIndex), label="select transcript file",
-                            choices = dir(datafolder), multiple = FALSE),
+                            choices = dir(datafolder, "bed|bedgraph|gff|gtf", ignore.case = TRUE), multiple = FALSE),
                 selectInput(paste0("lollitxformat", global$lolliIndex), label="transcript file format", choices = c("GFF", "BED", "bedGraph")),
                 tags$hr()
               ))
