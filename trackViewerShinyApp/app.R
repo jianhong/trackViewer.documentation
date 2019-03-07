@@ -57,7 +57,9 @@ ui <- fluidPage(
 
 # Define server logic required to draw tracks
 server <- function(input, output, session) {
-   global <- reactiveValues(refresh = FALSE, fileIndex=0, lolliIndex=0)
+   global <- reactiveValues(refresh = FALSE, fileIndex=0, lolliIndex=0, 
+                            fileinserted=c(), lolliinserted=c(),
+                            obsList=list())
    observe({
      if(input$refresh){
        isolate(global$refresh <- TRUE)
@@ -86,11 +88,13 @@ server <- function(input, output, session) {
      if(global$fileIndex>0){
        for(i in seq.int(global$fileIndex)){
          progress$set(message="reading track data", value=0.15+i*step)
-         tks[[input[[paste0("sample", i)]]]] <- 
-           tryCatch( importScore(file = file.path(datafolder, input[[paste0("file", i)]]),
-                                 format = input[[paste0("format", i)]],
-                                 ranges = gr),
-                     error = function(e){ NULL})
+         if(paste0("filecontainer", i) %in% global$fileinserted){
+           tks[[input[[paste0("sample", i)]]]] <- 
+             tryCatch( importScore(file = file.path(datafolder, input[[paste0("file", i)]]),
+                                   format = input[[paste0("format", i)]],
+                                   ranges = gr),
+                       error = function(e){ NULL})
+         }
        }
      }
      readBED <- function(con, format){
@@ -114,88 +118,90 @@ server <- function(input, output, session) {
      if(global$lolliIndex>0){
        for(i in seq.int(global$lolliIndex)){
          progress$set(message="reading track data", value=0.15+global$fileIndex*step+i*step)
-         mutation.frequency <- switch(input[[paste0("lolliformat", i)]],
-                                      "VCF"={
-                                        fl <- file.path(datafolder, input[[paste0("lollifile", i)]])
-                                        tab <- TabixFile(fl)
-                                        gen <- strsplit(input$TxDb, "\\.")[[1]]
-                                        gen <- gen[length(gen)-1]
-                                        vcf <- tryCatch(readVcf(fl, genome=gen, param = gr),
-                                                        error = function(e){
-                                                          readVcf(fl, genome=gen, param = gr.NCBI)
-                                                        })
-                                        mutation.frequency <- rowRanges(vcf)
-                                        mcols(mutation.frequency) <- cbind(mcols(mutation.frequency), 
-                                                                           VariantAnnotation::info(vcf))
-                                        if(length(mutation.frequency$score)==0){
-                                          mutation.frequency$score <- mutation.frequency$AF*100
-                                        }
-                                        mutation.frequency
-                                      },
-                                      "pie.stack.csv"={
-                                        tab <- read.csv(file.path(datafolder, input[[paste0("lollifile", i)]]), 
-                                                        stringsAsFactors = FALSE)
-                                        tab.col <- SimpleList(mapply(tab$color, tab$color2, 
-                                                                     FUN=function(a, b){c(a, b)}, 
-                                                                     SIMPLIFY = FALSE))
-                                        names(tab.col) <- tab$stack.factor
-                                        mutation.frequency <- with(tab, GRanges(seqnames, IRanges(start, end), 
-                                                                    strand=strand, stack.factor=stack.factor,
-                                                                    score=score, score2=score2,
-                                                                    color=tab.col))
-                                        mutation.frequency
-                                      },
-                                      "BED"={
-                                        readBED(file.path(datafolder, input[[paste0("lollifile", i)]]), 
-                                                input[[paste0("lolliformat", i)]])
-                                      },
-                                      "bedGraph"={
-                                        readBED(file.path(datafolder, input[[paste0("lollifile", i)]]), 
-                                                input[[paste0("lolliformat", i)]])
-                                      })
-         mutation.frequency <- promoters(mutation.frequency, upstream = 0, downstream = 1)
-         seqlevelsStyle(mutation.frequency) <- "UCSC"
-         mutation.frequency$type <- rep(input[[paste0("lollitype", i)]], length(mutation.frequency))
-         thislolli <- new("track", dat=mutation.frequency, 
-                          name=input[[paste0("lollisample", i)]], 
-                          type="lollipopData")
-         if(input[[paste0("lolliradio", i)]]!="none"){
-           if(input[[paste0("lolliradio", i)]]=="default"){
-             if(length(trs)>0){
+         if(paste0("lollicontainer", i) %in% global$lolliinserted){
+           mutation.frequency <- switch(input[[paste0("lolliformat", i)]],
+                                        "VCF"={
+                                          fl <- file.path(datafolder, input[[paste0("lollifile", i)]])
+                                          tab <- TabixFile(fl)
+                                          gen <- strsplit(input$TxDb, "\\.")[[1]]
+                                          gen <- gen[length(gen)-1]
+                                          vcf <- tryCatch(readVcf(fl, genome=gen, param = gr),
+                                                          error = function(e){
+                                                            readVcf(fl, genome=gen, param = gr.NCBI)
+                                                          })
+                                          mutation.frequency <- rowRanges(vcf)
+                                          mcols(mutation.frequency) <- cbind(mcols(mutation.frequency), 
+                                                                             VariantAnnotation::info(vcf))
+                                          if(length(mutation.frequency$score)==0){
+                                            mutation.frequency$score <- mutation.frequency$AF*100
+                                          }
+                                          mutation.frequency
+                                        },
+                                        "pie.stack.csv"={
+                                          tab <- read.csv(file.path(datafolder, input[[paste0("lollifile", i)]]), 
+                                                          stringsAsFactors = FALSE)
+                                          tab.col <- SimpleList(mapply(tab$color, tab$color2, 
+                                                                       FUN=function(a, b){c(a, b)}, 
+                                                                       SIMPLIFY = FALSE))
+                                          names(tab.col) <- tab$stack.factor
+                                          mutation.frequency <- with(tab, GRanges(seqnames, IRanges(start, end), 
+                                                                                  strand=strand, stack.factor=stack.factor,
+                                                                                  score=score, score2=score2,
+                                                                                  color=tab.col))
+                                          mutation.frequency
+                                        },
+                                        "BED"={
+                                          readBED(file.path(datafolder, input[[paste0("lollifile", i)]]), 
+                                                  input[[paste0("lolliformat", i)]])
+                                        },
+                                        "bedGraph"={
+                                          readBED(file.path(datafolder, input[[paste0("lollifile", i)]]), 
+                                                  input[[paste0("lolliformat", i)]])
+                                        })
+           mutation.frequency <- promoters(mutation.frequency, upstream = 0, downstream = 1)
+           seqlevelsStyle(mutation.frequency) <- "UCSC"
+           mutation.frequency$type <- rep(input[[paste0("lollitype", i)]], length(mutation.frequency))
+           thislolli <- new("track", dat=mutation.frequency, 
+                            name=input[[paste0("lollisample", i)]], 
+                            type="lollipopData")
+           if(input[[paste0("lolliradio", i)]]!="none"){
+             if(input[[paste0("lolliradio", i)]]=="default"){
+               if(length(trs)>0){
+                 thislolli$type <- "transcript"
+                 thislolli$dat2 <- thislolli$dat
+                 ## get the features granges
+                 features <- unlist(GRangesList(lapply(trs, function(.e) .e$dat)))
+                 lens <- sapply(trs, function(.e) length(.e$dat))
+                 ## define the feature legend name
+                 names(features) <- rep(names(trs), lens)
+                 ## define the feature track layers
+                 features$featureLayerID <- rep(seq_along(trs), lens)
+                 ## define the feature colors
+                 features$fill <- rep(seq_along(trs), lens)
+                 ## define the feature heights
+                 features$height <- ifelse(features$feature=="CDS", 0.02, 0.01)
+                 thislolli$dat <- features
+               }
+             }else{
                thislolli$type <- "transcript"
                thislolli$dat2 <- thislolli$dat
-               ## get the features granges
-               features <- unlist(GRangesList(lapply(trs, function(.e) .e$dat)))
-               lens <- sapply(trs, function(.e) length(.e$dat))
-               ## define the feature legend name
-               names(features) <- rep(names(trs), lens)
-               ## define the feature track layers
-               features$featureLayerID <- rep(seq_along(trs), lens)
-               ## define the feature colors
-               features$fill <- rep(seq_along(trs), lens)
-               ## define the feature heights
-               features$height <- ifelse(features$feature=="CDS", 0.02, 0.01)
+               features <- import(file.path(datafolder, input[[paste0("lollitxfile", i)]]),
+                                  format = input[[paste0("lollitxformat", i)]],
+                                  which = gr)
+               if(length(features$feature)<1){
+                 features$feature <- "CDS"
+               }
+               if(length(features$featureLayerID)==0){
+                 features$featureLayerID <- as.numeric(levels(features$gene))
+               }
+               if(length(features$transcript)>0){
+                 names(features) <- make.names(features$transcript)
+               }
                thislolli$dat <- features
              }
-           }else{
-             thislolli$type <- "transcript"
-             thislolli$dat2 <- thislolli$dat
-             features <- import(file.path(datafolder, input[[paste0("lollitxfile", i)]]),
-                                format = input[[paste0("lollitxformat", i)]],
-                                which = gr)
-             if(length(features$feature)<1){
-               features$feature <- "CDS"
-             }
-             if(length(features$featureLayerID)==0){
-               features$featureLayerID <- as.numeric(levels(features$gene))
-             }
-             if(length(features$transcript)>0){
-               names(features) <- make.names(features$transcript)
-             }
-             thislolli$dat <- features
            }
+           tks[[input[[paste0("lollisample", i)]]]] <- thislolli
          }
-         tks[[input[[paste0("lollisample", i)]]]] <- thislolli
        }
      }
      trackList <- list()
@@ -223,39 +229,70 @@ server <- function(input, output, session) {
    
    observeEvent(input$add, {
      isolate(global$fileIndex <- global$fileIndex+1)
+     currentIndex <- global$fileIndex
      isolate(global$refresh <- FALSE)
+     id = paste0("filecontainer", currentIndex)
      insertUI(selector = "#add",
               where = "beforeBegin",
-              ui = tagList(
-                tags$h4("Add data track from file"),
-                selectInput(paste0("file", global$fileIndex), label="select file",
-                            choices = dir(datafolder, "bed|bedgraph|bw|bigwig", ignore.case = TRUE), multiple = FALSE),
-                selectInput(paste0("format", global$fileIndex), label="file format", choices = c("bedGraph", "BED", "BigWig")),
-                textInput(paste0("sample", global$fileIndex), label = "sample name", value = ""),
-                tags$hr()
-              ))
+              ui = tags$div(tagList(
+                    tags$h4("Add data track from file"),
+                    selectInput(paste0("file", currentIndex), label="select file",
+                                choices = dir(datafolder, "bed|bedgraph|bw|bigwig", ignore.case = TRUE), multiple = FALSE),
+                    selectInput(paste0("format", currentIndex), label="file format", choices = c("bedGraph", "BED", "BigWig")),
+                    textInput(paste0("sample", currentIndex), label = "sample name", value = ""),
+                    actionButton(inputId = paste0("remove", currentIndex), label="remove above track", icon = icon("remove")),
+                    tags$hr()
+                    ),
+                    id = id)
+              )
+     isolate(global$fileinserted <- c(id, global$fileinserted))
+     if(is.null(global$obsList[[id]])){
+       isolate(global$obsList[[id]] <- observeEvent(input[[paste0("remove", currentIndex)]],
+                                                     {
+                                                       isolate(global$refresh <- FALSE)
+                                                       removeUI(selector = paste0("#", id))
+                                                       isolate(global$fileinserted <- 
+                                                                 global$fileinserted[-which(global$fileinserted==id)])
+                                                       })
+                )
+     }
    })
    observeEvent(input$lolli, {
      isolate(global$lolliIndex <- global$lolliIndex+1)
+     currentIndex <- global$lolliIndex
      isolate(global$refresh <- FALSE)
+     id = paste0("lollicontainer", currentIndex)
      insertUI(selector = "#add",
               where = "beforeBegin",
-              ui = tagList(
+              ui = tags$div(tagList(
                 tags$h4("Add lollipop plot track from file"),
-                selectInput(paste0("lollifile", global$lolliIndex), label="select file",
+                selectInput(paste0("lollifile", currentIndex), label="select file",
                             choices = dir(datafolder, "bed|bedgraph|vcf|csv", ignore.case = TRUE), multiple = FALSE),
-                selectInput(paste0("lolliformat", global$lolliIndex), label="file format", choices = c("bedGraph", "BED", "VCF", "pie.stack.csv")),
-                textInput(paste0("lollisample", global$lolliIndex), label = "sample name", value = ""),
-                selectInput(paste0("lollitype", global$lolliIndex), label = "lollipop plot type", choices = c("circle", "pin", "pie", "dandelion", "pie.stack")),
-                radioButtons(paste0("lolliradio", global$lolliIndex), label = "gene model",
+                selectInput(paste0("lolliformat", currentIndex), label="file format", choices = c("bedGraph", "BED", "VCF", "pie.stack.csv")),
+                textInput(paste0("lollisample", currentIndex), label = "sample name", value = ""),
+                selectInput(paste0("lollitype", currentIndex), label = "lollipop plot type", choices = c("circle", "pin", "pie", "dandelion", "pie.stack")),
+                radioButtons(paste0("lolliradio", currentIndex), label = "gene model",
                              choices = c("none"="none",
                                          "use TxDb package"="default",
                                          "load from following file"="file")),
-                selectInput(paste0("lollitxfile", global$lolliIndex), label="select transcript file",
+                selectInput(paste0("lollitxfile", currentIndex), label="select transcript file",
                             choices = dir(datafolder, "bed|bedgraph|gff|gtf", ignore.case = TRUE), multiple = FALSE),
-                selectInput(paste0("lollitxformat", global$lolliIndex), label="transcript file format", choices = c("GTF", "GFF", "bedGraph", "BED")),
+                selectInput(paste0("lollitxformat", currentIndex), label="transcript file format", choices = c("GTF", "GFF", "bedGraph", "BED")),
+                actionButton(inputId = paste0("removelolli", currentIndex), label="remove above track", icon = icon("remove")),
                 tags$hr()
+              ), id=id
               ))
+     isolate(global$lolliinserted <- c(id, global$lolliinserted))
+     if(is.null(global$obsList[[id]])){
+       isolate(global$obsList[[id]] <- observeEvent(input[[paste0("removelolli", currentIndex)]],
+                                                    {
+                                                      isolate(global$refresh <- FALSE)
+                                                      removeUI(selector = paste0("#", id))
+                                                      isolate(global$lolliinserted <- 
+                                                                global$lolliinserted[-which(global$lolliinserted==id)])
+                                                    })
+       )
+     }
    })
 }
 
