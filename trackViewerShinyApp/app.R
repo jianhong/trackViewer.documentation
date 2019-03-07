@@ -67,6 +67,15 @@ server <- function(input, output, session) {
        isolate(global$refresh <- FALSE)
      } 
    })
+   observeEvent({
+     input$TxDb
+     input$org
+     input$chr
+     input$start
+     input$end
+     input$trs},{
+                  isolate(global$refresh <- FALSE)
+                })
    plot <- renderbrowseTracks({
      if(!global$refresh) return()
      # Create a Progress object
@@ -246,8 +255,8 @@ server <- function(input, output, session) {
                     id = id)
               )
      isolate(global$fileinserted <- c(id, global$fileinserted))
-     if(is.null(global$obsList[[id]])){
-       isolate(global$obsList[[id]] <- observeEvent(input[[paste0("remove", currentIndex)]],
+     if(is.null(global$obsList[[paste0(id,"remove")]])){
+       isolate(global$obsList[[paste0(id,"remove")]] <- observeEvent(input[[paste0("remove", currentIndex)]],
                                                      {
                                                        isolate(global$refresh <- FALSE)
                                                        removeUI(selector = paste0("#", id))
@@ -255,6 +264,26 @@ server <- function(input, output, session) {
                                                                  global$fileinserted[-which(global$fileinserted==id)])
                                                        })
                 )
+     }
+     if(is.null(global$obsList[[paste0(id,"fileinput")]])){
+       isolate(global$obsList[[paste0(id,"fileinput")]] <- 
+                 observeEvent(input[[paste0("file", currentIndex)]],
+                              {
+                                isolate(global$refresh <- FALSE)
+                                filename <- input[[paste0("file", currentIndex)]]
+                                filename <- sub(".gz$", "", filename, ignore.case = TRUE)
+                                fileext <- tolower(sub("^.*\\.(.*?)$", "\\1", filename))
+                                fileext <- switch(fileext, "bed"="BED", "bg"="bedGraph", "bedgraph"="bedGraph",
+                                                  "bigwig"="BigWig", "bw"="BigWig", "unknown")
+                                if(fileext!="unknown"){
+                                  updateSelectInput(session, inputId = paste0("format", currentIndex),
+                                                    selected =fileext )
+                                }
+                                filename <- sub(paste0(".", fileext, "$"), "", filename)
+                                updateTextInput(session, inputId = paste0("sample", currentIndex),
+                                                value = filename)
+                              })
+       )
      }
    })
    observeEvent(input$lolli, {
@@ -283,14 +312,55 @@ server <- function(input, output, session) {
               ), id=id
               ))
      isolate(global$lolliinserted <- c(id, global$lolliinserted))
-     if(is.null(global$obsList[[id]])){
-       isolate(global$obsList[[id]] <- observeEvent(input[[paste0("removelolli", currentIndex)]],
+     if(is.null(global$obsList[[paste0(id,"remove")]])){
+       isolate(global$obsList[[paste0(id,"remove")]] <- observeEvent(input[[paste0("removelolli", currentIndex)]],
                                                     {
                                                       isolate(global$refresh <- FALSE)
                                                       removeUI(selector = paste0("#", id))
                                                       isolate(global$lolliinserted <- 
                                                                 global$lolliinserted[-which(global$lolliinserted==id)])
                                                     })
+       )
+     }
+     if(is.null(global$obsList[[paste0(id,"lolliinput")]])){
+       isolate(global$obsList[[paste0(id,"lolliinput")]] <- 
+                 observeEvent(input[[paste0("lollifile", currentIndex)]],
+                              {
+                                isolate(global$refresh <- FALSE)
+                                filename <- input[[paste0("lollifile", currentIndex)]]
+                                filename <- sub(".gz$", "", filename, ignore.case = TRUE)
+                                fileext <- tolower(sub("^.*\\.(.*?)$", "\\1", filename))
+                                fileext <- switch(fileext, "bed"="BED", "bg"="bedGraph", "bedgraph"="bedGraph",
+                                                  "vcf"="VCF", "csv"="pie.stack.csv", "unknown")
+                                if(fileext!="unknown"){
+                                  updateSelectInput(session, inputId = paste0("lolliformat", currentIndex),
+                                                    selected =fileext )
+                                }
+                                filename <- sub(paste0(".", fileext, "$"), "", filename)
+                                updateTextInput(session, inputId = paste0("lollisample", currentIndex),
+                                                value = filename)
+                                if(fileext=="pie.stack.csv"){
+                                  updateSelectInput(session, inputId = paste0("lollitype", currentIndex),
+                                                    selected ="pie.stack" )
+                                }
+                              })
+       )
+     }
+     if(is.null(global$obsList[[paste0(id,"lollitxinput")]])){
+       isolate(global$obsList[[paste0(id,"lollitxinput")]] <- 
+                 observeEvent(input[[paste0("lollitxfile", currentIndex)]],
+                              {
+                                isolate(global$refresh <- FALSE)
+                                filename <- input[[paste0("lollitxfile", currentIndex)]]
+                                filename <- sub(".gz$", "", filename, ignore.case = TRUE)
+                                fileext <- tolower(sub("^.*\\.(.*?)$", "\\1", filename))
+                                fileext <- switch(fileext, "bed"="BED", "bg"="bedGraph", "bedgraph"="bedGraph",
+                                                  "gff"="GFF", "gtf"="GTF", "unknown")
+                                if(fileext!="unknown"){
+                                  updateSelectInput(session, inputId = paste0("lollitxformat", currentIndex),
+                                                    selected =fileext )
+                                }
+                              })
        )
      }
    })
