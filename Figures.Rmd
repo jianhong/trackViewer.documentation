@@ -39,12 +39,12 @@ library(trackViewer) # load package
 gr <- parse2GRanges("chr3:108,476,000-108,485,000")
 gr # interesting genomic locations
 library(GenomicFeatures) # load GenomicFeatures to create TxDb from UCSC
-if(interactive()){
-    mm8KG <- makeTxDbFromUCSC(genome="mm8", tablename="knownGene")
-    saveDb(mm8KG, "mm8KG.sqlite")
-}else{## mm8KG was saved as sqlite file
+#if(interactive()){
+#    mm8KG <- makeTxDbFromUCSC(genome="mm8", tablename="knownGene")
+#    saveDb(mm8KG, "mm8KG.sqlite")
+#}else{## mm8KG was saved as sqlite file
     mm8KG <- loadDb("mm8KG.sqlite")
-}
+#}
 library(org.Mm.eg.db) # load annotation database
 ## create the gene model tracks information
 trs <- geneModelFromTxdb(mm8KG, org.Mm.eg.db, gr=gr)
