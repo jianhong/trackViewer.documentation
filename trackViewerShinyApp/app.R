@@ -45,7 +45,18 @@ ui <- fluidPage(
          actionButton("add", "add file"),
          actionButton("lolli", "add lollipop plot track"),
          tags$hr(),
-         actionButton("refresh", label="apply change", icon = icon("refresh"))
+         actionButton("refresh", label="apply change", icon = icon("refresh")),
+         tags$hr(),
+         tags$h4("Pre-settings for coordinates:"),
+         actionButton("preSet1", "pre-setting1"),
+         actionButton("preSet2", "pre-setting2"),
+         actionButton("preSet3", "pre-setting3"),
+         tags$script(
+                    'Shiny.addCustomMessageHandler("scrollCallback",
+                      function(msg) {
+                        window.scrollTo(0, 0);
+                      });'
+                     )
       ),
       
       # Show a plot of the generated distribution
@@ -63,6 +74,7 @@ server <- function(input, output, session) {
    observe({
      if(input$refresh){
        isolate(global$refresh <- TRUE)
+       session$sendCustomMessage(type="scrollCallback", 1)
      }else{
        isolate(global$refresh <- FALSE)
      } 
@@ -363,6 +375,28 @@ server <- function(input, output, session) {
                               })
        )
      }
+   })
+   
+   observeEvent(input$preSet1, {
+     updateSelectInput(session, inputId = "TxDb", selected = "TxDb.Mmusculus.UCSC.mm8.knownGene")
+     updateSelectInput(session, inputId = "org", selected = "org.Mm.eg.db")
+     updateTextInput(session, inputId = "chr", value = "chr3")
+     updateNumericInput(session, inputId = "start", value = 108476000)
+     updateNumericInput(session, inputId = "end", value = 108485000)
+   })
+   observeEvent(input$preSet2, {
+     updateSelectInput(session, inputId = "TxDb", selected = "TxDb.Hsapiens.UCSC.hg19.knownGene")
+     updateSelectInput(session, inputId = "org", selected = "org.Hs.eg.db")
+     updateTextInput(session, inputId = "chr", value = "22")
+     updateNumericInput(session, inputId = "start", value = 50968014)
+     updateNumericInput(session, inputId = "end", value = 50970514)
+   })
+   observeEvent(input$preSet3, {
+     updateSelectInput(session, inputId = "TxDb", selected = "TxDb.Hsapiens.UCSC.hg38.knownGene")
+     updateSelectInput(session, inputId = "org", selected = "org.Hs.eg.db")
+     updateTextInput(session, inputId = "chr", value = "chr17")
+     updateNumericInput(session, inputId = "start", value = 7669000)
+     updateNumericInput(session, inputId = "end", value = 7677000)
    })
 }
 
