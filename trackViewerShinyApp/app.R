@@ -47,10 +47,10 @@ ui <- fluidPage(
          tags$hr(),
          actionButton("refresh", label="apply change", icon = icon("refresh")),
          tags$hr(),
-         tags$h4("Pre-settings for coordinates:"),
-         actionButton("preSet1", "pre-setting1"),
-         actionButton("preSet2", "pre-setting2"),
-         actionButton("preSet3", "pre-setting3"),
+         tags$h4("Set the genomic coordinates for:"),
+         actionButton("preSet1", "Figure1A"),
+         actionButton("preSet2", "Figure1B"),
+         actionButton("preSet3", "Figure1D"),
          tags$script(
                     'Shiny.addCustomMessageHandler("scrollCallback",
                       function(msg) {
