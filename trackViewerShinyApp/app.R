@@ -42,7 +42,7 @@ ui <- fluidPage(
          numericInput("end", label = "end", value = 108485000),
          checkboxInput("trs", "include transcripts track", value = TRUE),
          
-         actionButton("add", "add file"),
+         actionButton("add", "add coverage track"),
          actionButton("lolli", "add lollipop plot track"),
          tags$hr(),
          actionButton("refresh", label="apply change", icon = icon("refresh")),
