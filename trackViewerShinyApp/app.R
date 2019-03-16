@@ -48,9 +48,10 @@ ui <- fluidPage(
          actionButton("refresh", label="apply change", icon = icon("refresh")),
          tags$hr(),
          tags$h4("Set the genomic coordinates for:"),
-         actionButton("preSet1", "Figure1A"),
-         actionButton("preSet2", "Figure1B"),
-         actionButton("preSet3", "Figure1D"),
+         actionButton("preSet1", "Example 1"),
+         actionButton("preSet2", "Example 2"),
+         actionButton("preSet3", "Example 3"),
+         actionButton("preSet4", "Example 4"),
          tags$script(
                     'Shiny.addCustomMessageHandler("scrollCallback",
                       function(msg) {
@@ -397,6 +398,13 @@ server <- function(input, output, session) {
      updateTextInput(session, inputId = "chr", value = "chr17")
      updateNumericInput(session, inputId = "start", value = 7669000)
      updateNumericInput(session, inputId = "end", value = 7677000)
+   })
+   observeEvent(input$preSet4, {
+     updateSelectInput(session, inputId = "TxDb", selected = "TxDb.Hsapiens.UCSC.hg19.knownGene")
+     updateSelectInput(session, inputId = "org", selected = "org.Hs.eg.db")
+     updateTextInput(session, inputId = "chr", value = "22")
+     updateNumericInput(session, inputId = "start", value = 50968014)
+     updateNumericInput(session, inputId = "end", value = 50970514)
    })
 }
 
