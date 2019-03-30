@@ -11,6 +11,7 @@ library(shiny)
 library(rtracklayer)
 library(VariantAnnotation)
 library(trackViewer)
+library(Rsamtools)
 # trackViewer version must be no less than 1.19.11
 stopifnot(packageVersion("trackViewer")>="1.19.11")
 
@@ -112,10 +113,15 @@ server <- function(input, output, session) {
          progress$set(message="reading track data", value=0.15+i*step)
          if(paste0("filecontainer", i) %in% global$fileinserted){
            tks[[input[[paste0("sample", i)]]]] <- 
-             tryCatch( importScore(file = file.path(datafolder, input[[paste0("file", i)]]),
-                                   format = input[[paste0("format", i)]],
-                                   ranges = gr),
-                       error = function(e){ NULL})
+             ifelse(input[[paste0("format", i)]]=="bam",
+                    tryCatch( importBam(file = file.path(datafolder, input[[paste0("file", i)]]),
+                                          pairs = testPairedEndBam(file.path(datafolder, input[[paste0("file", i)]])),
+                                          ranges = gr),
+                              error = function(e){ NULL}),                         
+                    tryCatch( importScore(file = file.path(datafolder, input[[paste0("file", i)]]),
+                                          format = input[[paste0("format", i)]],
+                                          ranges = gr),
+                              error = function(e){ NULL}))
          }
        }
      }
@@ -259,8 +265,8 @@ server <- function(input, output, session) {
               ui = tags$div(tagList(
                     tags$h4("Add data track from file"),
                     selectInput(paste0("file", currentIndex), label="select file",
-                                choices = dir(datafolder, "bed|bedgraph|bw|bigwig", ignore.case = TRUE), multiple = FALSE),
-                    selectInput(paste0("format", currentIndex), label="file format", choices = c("bedGraph"="bedGraph", "BED"="BED", "bigWig"="BigWig")),
+                                choices = dir(datafolder, "bed|bedgraph|bw|bigwig|bam", ignore.case = TRUE), multiple = FALSE),
+                    selectInput(paste0("format", currentIndex), label="file format", choices = c("bedGraph"="bedGraph", "BED"="BED", "bigWig"="BigWig", "BAM"="bam")),
                     textInput(paste0("sample", currentIndex), label = "sample name", value = ""),
                     actionButton(inputId = paste0("remove", currentIndex), label="remove above track", icon = icon("remove")),
                     tags$hr()
