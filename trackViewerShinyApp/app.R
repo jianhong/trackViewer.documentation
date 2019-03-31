@@ -112,16 +112,31 @@ server <- function(input, output, session) {
        for(i in seq.int(global$fileIndex)){
          progress$set(message="reading track data", value=0.15+i*step)
          if(paste0("filecontainer", i) %in% global$fileinserted){
-           tks[[input[[paste0("sample", i)]]]] <- 
-             ifelse(input[[paste0("format", i)]]=="bam",
-                    tryCatch( importBam(file = file.path(datafolder, input[[paste0("file", i)]]),
-                                          pairs = testPairedEndBam(file.path(datafolder, input[[paste0("file", i)]])),
-                                          ranges = gr),
-                              error = function(e){ NULL}),                         
-                    tryCatch( importScore(file = file.path(datafolder, input[[paste0("file", i)]]),
-                                          format = input[[paste0("format", i)]],
-                                          ranges = gr),
-                              error = function(e){ NULL}))
+           if(paste0("filecontainer", i) %in% global$fileinserted){
+             if(input[[paste0("format", i)]]=="bam"){
+               tks[[input[[paste0("sample", i)]]]] <- 
+                 tryCatch(importBam(file = file.path(datafolder, input[[paste0("file", i)]]),
+                                    pairs = testPairedEndBam(file.path(datafolder, input[[paste0("file", i)]])),
+                                    ranges = gr.UCSC),
+                          error = function(e){ 
+                            tryCatch(importBam(file = file.path(datafolder, input[[paste0("file", i)]]),
+                                               pairs = testPairedEndBam(file.path(datafolder, input[[paste0("file", i)]])),
+                                               ranges = gr.NCBI),
+                                     error=function(e){NULL})
+                            })
+             }else{
+               tks[[input[[paste0("sample", i)]]]] <- 
+                 tryCatch(importScore(file = file.path(datafolder, input[[paste0("file", i)]]),
+                                      format = input[[paste0("format", i)]],
+                                      ranges = gr.UCSC), 
+                          error = function(e){ 
+                            tryCatch(importScore(file = file.path(datafolder, input[[paste0("file", i)]]),
+                                                 format = input[[paste0("format", i)]],
+                                                 ranges = gr.NCBI),
+                                     error=function(e){NULL})
+                            })
+             }
+           }
          }
        }
      }
@@ -293,7 +308,7 @@ server <- function(input, output, session) {
                                 filename <- sub(".gz$", "", filename, ignore.case = TRUE)
                                 fileext <- tolower(sub("^.*\\.(.*?)$", "\\1", filename))
                                 fileext <- switch(fileext, "bed"="BED", "bg"="bedGraph", "bedgraph"="bedGraph",
-                                                  "bigwig"="BigWig", "bw"="BigWig", "unknown")
+                                                  "bigwig"="BigWig", "bw"="BigWig", "bam"="bam", "unknown")
                                 if(fileext!="unknown"){
                                   updateSelectInput(session, inputId = paste0("format", currentIndex),
                                                     selected =fileext )
