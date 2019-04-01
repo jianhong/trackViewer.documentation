@@ -22,6 +22,10 @@ mutation.frequency$color <-
          "lightcyan", "lavender")
 ## plot Global Allele Frequency based on AC/AN
 mutation.frequency$score <- round(mutation.frequency$AF*100)
+## change the color for score==0;
+mutation.frequency$color[mutation.frequency$score==0] <- "#FFFFFF"
+#change it to 1 to make the color changable.
+mutation.frequency$score[mutation.frequency$score==0] <- 1
 ## keep sequence level style same
 seqlevelsStyle(gr) <- seqlevelsStyle(mutation.frequency) <- "UCSC"
 ## extract transcripts in the range

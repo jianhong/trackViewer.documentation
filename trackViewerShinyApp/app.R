@@ -47,6 +47,7 @@ ui <- fluidPage(
          actionButton("lolli", "add lollipop plot track"),
          tags$hr(),
          actionButton("refresh", label="apply change", icon = icon("refresh")),
+         actionButton("load", label="load a saved session", icon = icon("upload")),
          tags$hr(),
          tags$h4("Set the genomic coordinates for:"),
          actionButton("preSet1", "Example 1"),
@@ -57,8 +58,18 @@ ui <- fluidPage(
                     'Shiny.addCustomMessageHandler("scrollCallback",
                       function(msg) {
                         window.scrollTo(0, 0);
-                      });'
-                     )
+                      });
+                    Shiny.addCustomMessageHandler("loadCallback",
+                      function(msg){
+                        var id = setInterval(frame, 500);
+                        function frame(){
+                          if(typeof(document.getElementById("importjsonfilename"))=="object"){
+                            clearInterval(id);
+                            document.getElementById("importjsonfilename").click();
+                          }
+                        }
+                      });
+                    ')
       ),
       
       # Show a plot of the generated distribution
@@ -397,6 +408,16 @@ server <- function(input, output, session) {
                               })
        )
      }
+   })
+   
+   observeEvent(input$load, {
+     output$trackViewer <- 
+       renderbrowseTracks({
+         A=new("track", dat=GRanges(1, IRanges(c(1, 3), c(2, 4)), score=c(1, 10)), 
+               type="data", format="BED")
+         browseTracks(trackList(A), gr=GRanges(1, IRanges(1, 10000)))
+       })
+       session$sendCustomMessage(type="loadCallback", 1)
    })
    
    observeEvent(input$preSet1, {
