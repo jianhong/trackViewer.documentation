@@ -90,6 +90,7 @@ server <- function(input, output, session) {
      if(input$refresh){
        isolate(global$refresh <- TRUE)
        session$sendCustomMessage(type="scrollCallback", 1)
+       output$trackViewer <- plot
      }else{
        isolate(global$refresh <- FALSE)
      } 
