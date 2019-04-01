@@ -63,7 +63,8 @@ ui <- fluidPage(
                       function(msg){
                         var id = setInterval(frame, 500);
                         function frame(){
-                          if(typeof(document.getElementById("importjsonfilename"))=="object"){
+//console.log(typeof(d3.select("#importjsonfilename")));
+                          if(typeof(d3.select("#importjsonfilename"))!="undefined"){
                             clearInterval(id);
                             document.getElementById("importjsonfilename").click();
                           }
