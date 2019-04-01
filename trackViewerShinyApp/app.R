@@ -61,12 +61,13 @@ ui <- fluidPage(
                       });
                     Shiny.addCustomMessageHandler("loadCallback",
                       function(msg){
-                        var id = setInterval(frame, 500);
+                        var id = setInterval(frame, 100);
                         function frame(){
-//console.log(typeof(d3.select("#importjsonfilename")));
                           if(typeof(d3.select("#importjsonfilename"))!="undefined"){
-                            clearInterval(id);
-                            document.getElementById("importjsonfilename").click();
+                            if(document.getElementById("importjsonfilename")!= null){
+                             clearInterval(id);
+                             document.getElementById("importjsonfilename").click();
+                            }
                           }
                         }
                       });
