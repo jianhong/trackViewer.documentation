@@ -16,7 +16,7 @@ CLIP <- importScore("CLIP.bedGraph", format="bedGraph", ranges=gr)
 control <- importScore("control.bedGraph", format="bedGraph", ranges=gr)
 knockdown <- importScore("knockdown.bedGraph", format="bedGraph", ranges=gr)
 ## create styles by preset theme
-optSty <- optimizeStyle(trackList(trs1A, knockdown, control, CLIP), theme="col")
+optSty <- optimizeStyle(trackList(trs1A, knockdown, control, CLIP), theme="safe")
 trackList <- optSty$tracks
 viewerStyle <- optSty$style
 ## adjust the styles for this track
@@ -28,11 +28,12 @@ names(trackList)[4] <- "RNA-seq control"
 setTrackStyleParam(trackList[[1]], "ylabpos", "bottomleft")
 setTrackStyleParam(trackList[[2]], "ylabpos", "bottomleft")
 ### change the color of gene model track
-setTrackStyleParam(trackList[[1]], "ylabgp", list(cex=1, col="red"))
-setTrackStyleParam(trackList[[2]], "ylabgp", list(cex=1, col="green"))
-setTrackStyleParam(trackList[[3]], "ylabgp", list(cex=1, col="blue"))
-setTrackStyleParam(trackList[[4]], "ylabgp", list(cex=1, col="cyan"))
-setTrackStyleParam(trackList[[5]], "ylabgp", list(cex=1, col="magenta"))
+for(i in 1:5){
+  setTrackStyleParam(trackList[[i]], "ylabgp", list(cex=.5, col="#000000"))
+}
+for(i in 3:5){
+  setTrackYaxisParam(trackList[[i]], "gp", list(cex=.5))
+}
 setTrackStyleParam(trackList[[4]], "ylim", c(0, 650))
 setTrackStyleParam(trackList[[5]], "ylim", c(0, 80))
 ### remove the xaxis
@@ -40,8 +41,9 @@ setTrackViewerStyleParam(viewerStyle, "xaxis", FALSE)
 ### add a scale bar in CLIP track
 setTrackXscaleParam(trackList[[5]], "draw", TRUE)
 setTrackXscaleParam(trackList[[5]], "label", "1000 bp")
-setTrackXscaleParam(trackList[[5]], "from", new("pos", x=108478000, y=40, unit="native"))
-setTrackXscaleParam(trackList[[5]], "to", new("pos", x=108479000, y=40, unit="native"))
+setTrackXscaleParam(trackList[[5]], "from", new("pos", x=108478000, y=20, unit="native"))
+setTrackXscaleParam(trackList[[5]], "to", new("pos", x=108479000, y=20, unit="native"))
+setTrackXscaleParam(trackList[[5]], "gp", list(cex=.5))
 ## plot the tracks
 trackList1A <- trackList
 gr1A <- gr
@@ -70,10 +72,12 @@ mutation.frequency$border <- "gray30"
 mutation.frequency$color <-
   ifelse(grepl("^rs", names(mutation.frequency)), 
          "lightcyan", "lavender")
+mutation.frequency$lwd <- .25
 ## plot Global Allele Frequency based on AC/AN
 mutation.frequency$score <- round(mutation.frequency$AF*100)
 ## change the SNPs label rotation angle
 mutation.frequency$label.parameter.rot <- 45
+mutation.frequency$label.parameter.gp <- gpar(cex=.4)
 ## keep sequence level style same
 seqlevelsStyle(gr) <- seqlevelsStyle(mutation.frequency) <- "UCSC"
 ## extract transcripts in the range
@@ -91,6 +95,8 @@ names(features) <- features$symbol
 features$fill <- rep(c("lightblue", "mistyrose", "mistyrose"), flen)
 ## define the feature heights
 features$height <- ifelse(features$feature=="CDS", .04, .02)
+features$cex <- .5
+features$lwd <- .5
 ## import methylation data from a bed file
 methy <- import(system.file("extdata", "methy.bed", package="trackViewer"), "BED")
 ## subset the data
@@ -113,24 +119,29 @@ methy.mul.patient$score <-
 ## for a pie plot, two or more numeric meta-columns are required.
 methy.mul.patient$score2 <- 100 - methy.mul.patient$score
 ## set different color set for different patient
-patient.color.set <- as.list(as.data.frame(rbind(rainbow(length(stack.factors)), 
+safeColors <- c("#D55E00", "#009E73", "#0072B2",
+                "#56B4E9", "#CC79A7", "#E69F00", "#F0E442", "#BEBEBE")
+patient.color.set <- as.list(as.data.frame(rbind(safeColors[seq_along(stack.factors)], 
                                                  "#FFFFFFFF"), 
                                            stringsAsFactors=FALSE))
 names(patient.color.set) <- stack.factors
 methy.mul.patient$color <- 
   patient.color.set[methy.mul.patient$stack.factor]
+methy.mul.patient$lwd <- .25
 ## set the legends
 legends <- list(list(labels=c("known", "unkown"), 
                      fill=c("lightcyan", "lavender"), 
-                     color=c("gray80", "gray80")), 
-                list(labels=stack.factors, col="gray80", 
-                     fill=sapply(patient.color.set, `[`, 1), cex=.75))
+                     color=c("gray80", "gray80"),
+                     cex=.5), 
+                list(labels=stack.factors, col="black", 
+                     fill=sapply(patient.color.set, `[`, 1),
+                     cex=.5))
 ## lollipop plot
 data1B <- list(mutaions=mutation.frequency, methylations=methy.mul.patient)
 features1B <- features
 gr1B <- gr
 legend1B <- legends
-features1B$cex <- .5
+legend1B$cex <- .5
 features1BA <- features1B
 names(features1BA) <- NULL
 
@@ -148,13 +159,14 @@ data <- unique(data)
 snps <- with(data, GRanges("chr17", IRanges(hg38_Chr17_coordinates, width=1), 
                            effect=factor(Effect), score=counts))
 ## set the bristles head colors of the pappus by mutation types
-snps$color <- as.numeric(snps$effect)+1
+snps$color <- safeColors[as.numeric(snps$effect)]
 ## parepare the legends
 legends <- list(list(labels=levels(snps$effect), 
-                     fill=seq.int(length(levels(snps$effect)))+1,
-                     cex = .75))
+                     fill=safeColors[seq.int(length(levels(snps$effect)))],
+                     cex = .5))
 ## set the beak color of dandelion seeds.
 snps$border <- "gray"
+snps$lwd <- .25
 ## set plotting region
 gr <- GRanges("chr17", IRanges(7669000, 7677000))
 ## extract transcripts in the range
@@ -173,6 +185,8 @@ features$featureLayerID <- rep(seq.int(3), lens)
 features$fill <- rep(c("lightblue", "mistyrose", "orange"), lens)
 ## define the feature heights
 features$height <- ifelse(features$feature=="CDS", 0.02, 0.01)
+## feature border lwd
+features$lwd <- .5
 ## plot, use mean function to calculate the height of beak of dandelion seeds.
 features1C <- features
 gr1C <- gr
@@ -194,9 +208,10 @@ TET1.binding.sites <- GRanges("chrX", TET1.binding.sites, strand = "+",
                               score=mcols(TET1.binding.sites.v)$score)
 width(TET1.binding.sites) <- 1
 TET1.binding.sites$border <- "gray80"
-TET1.binding.sites$color <- 3
+TET1.binding.sites$color <- "#009E73"
 ## set lollipop plot type to pin.
 TET1.binding.sites$type <- "pin"
+TET1.binding.sites$cex <- .5
 TET1.binding.sites <- new("track", dat=TET1.binding.sites, type="lollipopData")
 gr <- GRanges("chrX", IRanges(147910500, 147914000))
 ## extract transcripts in the range
@@ -210,23 +225,25 @@ FMR1$dat2 <- GRanges("chrX",
                              names = c("AP2", "UBP1", "Sp1", "Sp1", "NRF1", 
                                        "Sp1", "AGP", "NRF1", "Sp1", "AP2", 
                                        "Sp1-like", "Myc", "Zeste")))
-FMR1$dat2$color <- as.numeric(factor(names(FMR1$dat2)))
+FMR1$dat2$color <- safeColors[as.numeric(factor(names(FMR1$dat2)))]
 FMR1$dat2$border <- "gray"
 ## set lollipop label parameter.
 FMR1$dat2$label.parameter.rot <- 45
-FMR1$dat2$cex <- .75
+FMR1$dat2$label.parameter.gp <- gpar(cex=.4)
+FMR1$dat2$cex <- .5
+FMR1$dat2$lwd <- .25
 ## add methylation counts
 maxX <- GRanges("chrX", IRanges(147911550, width=1), score=9, 
                 color="white", border="white")
 FX52_mock_methy <- GRanges("chrX", IRanges(147911556+seq.int(35)*4, width=1),
                            score=c(8, 8, 8, 7, 8, 9, 9, 9, 8, 9, 9, 9, 9, 8, 9,
                                    9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-                                   9, 9, 9, 8, 9), color=5, border="gray")
+                                   9, 9, 9, 8, 9), color=5, border="gray", lwd=.25)
 FX52_mock_methy <- new("track", dat=c(FX52_mock_methy, maxX), type="lollipopData")
 FX52_dC_T_methy <- GRanges("chrX", IRanges(147911556+seq.int(35)*4, width=1),
                            score=c(3, 5, 3, 2, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 0,
                                    0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                                   0, 1, 0, 0, 1), color=4, border="gray")
+                                   0, 1, 0, 0, 1), color=4, border="gray", lwd=.25)
 FX52_dC_T_methy$color[FX52_dC_T_methy$score==0] <- "white"
 FX52_dC_T_methy <- new("track", dat=c(FX52_dC_T_methy, maxX), type="lollipopData")
 ## import RNA-seq tracks
@@ -244,7 +261,7 @@ optSty <- optimizeStyle(trackList(FMR1, TET1.binding.sites,
                                   iPSC_dC_dT.BSseq, iPSC_dC_T.BSseq, 
                                   iPSC_mock.RNAseq, iPSC_dC_T.RNAseq, 
                                   heightDist=c(2, 1, 1, 1, 1, 1, 1, 1)), 
-                        theme="col")
+                        theme="safe")
 trackList <- optSty$tracks
 viewerStyle <- optSty$style
 ## adjust y scale
@@ -255,14 +272,17 @@ for(i in c("iPSC_dC_T.RNAseq", "iPSC_mock.RNAseq")){
 setTrackStyleParam(trackList[["iPSC_dC_T.BSseq"]], "color", c("#E69F00", "pink"))
 setTrackStyleParam(trackList[["iPSC_dC_T.BSseq"]], "ylabgp", 
                    list(cex=trackList[["iPSC_dC_T.BSseq"]]$style@ylabgp$cex,
-                        col="orange"))
+                        col="black"))
 setTrackStyleParam(trackList[["iPSC_dC_dT.BSseq"]], "color", c("#E69F00", "pink"))
 for(i in seq_along(trackList)){
-  setTrackStyleParam(trackList[[i]], "ylabgp", list(cex=1, col=trackList[[i]]$style@ylabgp$col))
+  setTrackStyleParam(trackList[[i]], "ylabgp", list(cex=.5, col=trackList[[i]]$style@ylabgp$col))
 }
 
-
-
+for(i in 5:8){
+  setTrackYaxisParam(trackList[[i]], "gp", list(cex=.5))
+}
+setTrackViewerStyleParam(viewerStyle, "margin", c(.07, .05, .02, .05))
+setTrackStyleParam(trackList[["iPSC_dC_dT.BSseq"]], "ylabpos", "underbaseline")
 
 trackList1D <- trackList
 gr1D <- gr
@@ -270,49 +290,58 @@ viewerStyle1D <- viewerStyle
 viewerStyle1D@xgp$cex <- .5 
 
 plotFigure <- function(){
-  pdf("4in1.pdf", width = 14, height = 8)
   vp <- viewport(.275, .8, .55, .38)
   pushViewport(vp)
-  grid.text("A)", 0.05, .95, just = c(0, 1))
+  grid.text("A)", 0.05, .95, just = c(0, 1), gp=gpar(fontface="bold", cex=1))
   vp <- viewTracks(trackList1A, gr=gr1A, viewerStyle=viewerStyle1A, newpage = FALSE)
   ### add guide lines to show the range of CLIP-seq signal
   addGuideLine(c(108481252, 108481887), vp=vp)
   ### add arrow mark to show the alternative splicing event
   addArrowMark(list(x=c(108483570, 108483570), 
                     y=c(3, 4)), ##layer 3 and 4
-               label=c("Inclusive\nexon", ""), 
-               col=c("blue", "cyan"), 
-               vp=vp, quadrant=1, cex=.75)
+               label=c("Inclusive nexon", ""), 
+               col=c("black", "black"), 
+               vp=vp, quadrant=2, cex=.5,
+               length=unit(.125, "inches"))
   popViewport()
   
   
   vp <- viewport(.275, .31, .55, .6)
   pushViewport(vp)
-  grid.text("C)", 0.05, .95, just = c(0, 1))
+  grid.text("C)", 0.05, .99, just = c(0, 1), gp=gpar(fontface="bold", cex=1))
   vp <- viewTracks(trackList1D, gr=gr1D, viewerStyle=viewerStyle1D, newpage = FALSE)
   addGuideLine(c(147911556, 147911695, 147912052, 147912111), 
                col = c("#CC79A7", "#CC79A7", "#0072B2", "#0072B2"), vp=vp)
   addArrowMark(pos = list(x=c(147911626, 147912070), y=c(4, 1)), 
                label = c("CpG island", "(CGG)n"),
-               col = c("#CC79A7", "#0072B2"), vp=vp, cex=.75)
+               col = c("black", "black"), vp=vp, cex=.5,
+               length=unit(.125, "inches"))
   popViewport()
   
-  vp <- viewport(.775, .62, .45, .6)
+  vp <- viewport(.76, .68, .5, .6)
   pushViewport(vp)
-  grid.text("B)", 0, 1.05, just = c(0, 1))
+  grid.text("B)", 0.12, .99, just = c(0, 1), gp=gpar(fontface="bold", cex=1))
   lolliplot(data1B, 
             list(features1B, features1BA), ranges=gr1B, type=c("circle", "pie.stack"), 
-            legend=legend1B, newpage = FALSE, cex = .75, xaxis = TRUE, yaxis = FALSE)
+            legend=legend1B, newpage = FALSE, cex = .5, xaxis = TRUE, yaxis = FALSE,
+            xaxis.gp=gpar(cex=.5), yaxis.gp=gpar(cex=.5), ylab.gp=gpar(cex=.65))
   popViewport()
   
   vp <- viewport(.775, .19, .45, .4)
   pushViewport(vp)
-  grid.text("D)", 0, .85, just = c(0, 1))
+  grid.text("D)", .05, .95, just = c(0, 1), gp=gpar(fontface="bold", cex=1))
   dandelion.plot(snps, features1C, ranges=gr1C, legend = legend1C, type="circle",
-                 heightMethod = mean, yaxis = TRUE, ylab='mean of mutation counts', newpage = FALSE, cex = .5)
+                 heightMethod = mean, yaxis = TRUE, ylab='mean of mutation counts', 
+                 xaxis.gp=gpar(cex=.5), yaxis.gp=gpar(cex=.5), ylab.gp=gpar(cex=.65),
+                 newpage = FALSE, cex = .5)
   popViewport()
   
-  dev.off()
 }
 
+pdf("4in1.pdf", width = 7.08, height = 4)
 plotFigure()
+dev.off()
+
+# pdf("4in1.14.pdf", width = 14, height = 8)
+# plotFigure()
+# dev.off()
