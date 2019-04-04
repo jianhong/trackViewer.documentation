@@ -72,7 +72,7 @@ mutation.frequency$border <- "gray30"
 mutation.frequency$color <-
   ifelse(grepl("^rs", names(mutation.frequency)), 
          "lightcyan", "lavender")
-mutation.frequency$lwd <- .25
+mutation.frequency$lwd <- .3
 ## plot Global Allele Frequency based on AC/AN
 mutation.frequency$score <- round(mutation.frequency$AF*100)
 ## change the SNPs label rotation angle
@@ -127,7 +127,7 @@ patient.color.set <- as.list(as.data.frame(rbind(safeColors[seq_along(stack.fact
 names(patient.color.set) <- stack.factors
 methy.mul.patient$color <- 
   patient.color.set[methy.mul.patient$stack.factor]
-methy.mul.patient$lwd <- .25
+methy.mul.patient$lwd <- .3
 ## set the legends
 legends <- list(list(labels=c("known", "unkown"), 
                      fill=c("lightcyan", "lavender"), 
@@ -166,7 +166,7 @@ legends <- list(list(labels=levels(snps$effect),
                      cex = .5))
 ## set the beak color of dandelion seeds.
 snps$border <- "gray"
-snps$lwd <- .25
+snps$lwd <- .3
 ## set plotting region
 gr <- GRanges("chr17", IRanges(7669000, 7677000))
 ## extract transcripts in the range
@@ -231,19 +231,19 @@ FMR1$dat2$border <- "gray"
 FMR1$dat2$label.parameter.rot <- 45
 FMR1$dat2$label.parameter.gp <- gpar(cex=.4)
 FMR1$dat2$cex <- .5
-FMR1$dat2$lwd <- .25
+FMR1$dat2$lwd <- .3
 ## add methylation counts
 maxX <- GRanges("chrX", IRanges(147911550, width=1), score=9, 
                 color="white", border="white")
 FX52_mock_methy <- GRanges("chrX", IRanges(147911556+seq.int(35)*4, width=1),
                            score=c(8, 8, 8, 7, 8, 9, 9, 9, 8, 9, 9, 9, 9, 8, 9,
                                    9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
-                                   9, 9, 9, 8, 9), color=5, border="gray", lwd=.25)
+                                   9, 9, 9, 8, 9), color=5, border="gray", lwd=.3)
 FX52_mock_methy <- new("track", dat=c(FX52_mock_methy, maxX), type="lollipopData")
 FX52_dC_T_methy <- GRanges("chrX", IRanges(147911556+seq.int(35)*4, width=1),
                            score=c(3, 5, 3, 2, 0, 1, 1, 2, 0, 1, 1, 0, 0, 1, 0,
                                    0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,
-                                   0, 1, 0, 0, 1), color=4, border="gray", lwd=.25)
+                                   0, 1, 0, 0, 1), color=4, border="gray", lwd=.3)
 FX52_dC_T_methy$color[FX52_dC_T_methy$score==0] <- "white"
 FX52_dC_T_methy <- new("track", dat=c(FX52_dC_T_methy, maxX), type="lollipopData")
 ## import RNA-seq tracks
