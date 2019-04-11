@@ -338,7 +338,7 @@ plotFigure <- function(){
   
 }
 
-pdf("4in1.pdf", width = 7.08, height = 4)
+pdf("4in1.pdf", width = 7, height = 4)
 plotFigure()
 dev.off()
 

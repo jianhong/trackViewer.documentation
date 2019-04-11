@@ -54,6 +54,7 @@ ui <- fluidPage(
          actionButton("preSet2", "Example 2"),
          actionButton("preSet3", "Example 3"),
          actionButton("preSet4", "Example 4"),
+         textInput("symbol", label="search by gene name", value = ""),
          tags$script(
                     'Shiny.addCustomMessageHandler("scrollCallback",
                       function(msg) {
@@ -450,6 +451,43 @@ server <- function(input, output, session) {
      updateTextInput(session, inputId = "chr", value = "22")
      updateNumericInput(session, inputId = "start", value = 50968014)
      updateNumericInput(session, inputId = "end", value = 50970514)
+   })
+   observeEvent(input$symbol, {
+     isolate(global$refresh <- FALSE)
+     if(input$symbol!=""){
+       progress <- shiny::Progress$new()
+       progress$set(message=paste("searching", input$symbol), value=0)
+       require(input$TxDb, character.only = TRUE)
+       require(input$org, character.only = TRUE)
+       prefix <- sub(".db", "", input$org)
+       eid <- tryCatch(mget(input$symbol, envir=get(paste0(prefix, "ALIAS2EG")), ifnotfound = NA),
+                       error=function(e){
+                         message(e)
+                         return(NA)
+                       })
+       eid <- eid[[1]]
+       progress$set(message=paste("get gene id", eid), value=50)
+       if(!is.na(eid)){
+         location <- tryCatch(select(get(input$TxDb), keys=eid, 
+                                     columns=c("EXONCHROM", "EXONSTART", "EXONEND"), 
+                                     keytype = "GENEID"), 
+                              error=function(e){
+                                message(e)
+                                return(data.frame())
+                              })
+         progress$set(message="get gene location", value=90)
+         if(nrow(location)>0){
+           seqnames <- as.character(location$EXONCHROM)[1]
+           rg <- range(c(location$EXONSTART, location$EXONEND))
+           progress$set(message="set genomic loation", value=0.95)
+           updateTextInput(session, inputId = "chr", value = seqnames)
+           updateNumericInput(session, inputId = "start", value = rg[1])
+           updateNumericInput(session, inputId = "end", value = rg[2])
+         }
+       }
+       session$sendCustomMessage(type="scrollCallback", 1)
+       on.exit(progress$close())
+     }
    })
 }
 
