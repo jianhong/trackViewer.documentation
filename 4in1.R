@@ -299,7 +299,7 @@ plotFigure <- function(){
   ### add arrow mark to show the alternative splicing event
   addArrowMark(list(x=c(108483570, 108483570), 
                     y=c(3, 4)), ##layer 3 and 4
-               label=c("Inclusive nexon", ""), 
+               label=c("Inclusive exon", ""), 
                col=c("black", "black"), 
                vp=vp, quadrant=2, cex=.5,
                length=unit(.125, "inches"))
