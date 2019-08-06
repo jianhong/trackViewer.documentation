@@ -45,10 +45,17 @@ ui <- fluidPage(
          
          actionButton("add", "add coverage track"),
          actionButton("lolli", "add lollipop plot track"),
+         actionButton("addRemote", "add remote coverage track"),
+         actionButton("lolliRemote", "add remote lollipop plot track"),
          tags$hr(),
          actionButton("refresh", label="apply change", icon = icon("refresh")),
          actionButton("load", label="load a saved session", icon = icon("upload")),
          tags$hr(),
+         
+         #actionButton("zoomin", "Zoom in 5X"),
+         #actionButton("zoomout", "Zoom out 5X"),
+         
+         #tags$hr(),
          tags$h4("Set the genomic coordinates for:"),
          actionButton("preSet1", "Example 1"),
          actionButton("preSet2", "Example 2"),
@@ -86,14 +93,17 @@ ui <- fluidPage(
 server <- function(input, output, session) {
    global <- reactiveValues(refresh = FALSE, fileIndex=0, lolliIndex=0, 
                             fileinserted=c(), lolliinserted=c(),
-                            obsList=list())
+                            obsList=list(), forceRefresh = FALSE,
+                            remoteurl=NULL)
    observe({
      if(input$refresh){
        isolate(global$refresh <- TRUE)
+       isolate(global$forceRefresh <- FALSE)
        session$sendCustomMessage(type="scrollCallback", 1)
        output$trackViewer <- plot
      }else{
        isolate(global$refresh <- FALSE)
+       isolate(global$forceRefresh <- FALSE)
      } 
    })
    observeEvent({
@@ -103,8 +113,13 @@ server <- function(input, output, session) {
      input$start
      input$end
      input$trs},{
-                  isolate(global$refresh <- FALSE)
-                })
+       if(global$forceRefresh){
+         isolate(global$refresh <- TRUE)
+       }else{
+         isolate(global$refresh <- FALSE)
+       }
+       isolate(global$forceRefresh <- FALSE)
+       })
    plot <- renderbrowseTracks({
      if(!global$refresh) return()
      # Create a Progress object
@@ -141,11 +156,15 @@ server <- function(input, output, session) {
                             })
              }else{
                tks[[input[[paste0("sample", i)]]]] <- 
-                 tryCatch(importScore(file = file.path(datafolder, input[[paste0("file", i)]]),
+                 tryCatch(importScore(file = ifelse(grepl("\\:\\/\\/", input[[paste0("file", i)]]), 
+                                                    input[[paste0("file", i)]],
+                                                    file.path(datafolder, input[[paste0("file", i)]])),
                                       format = input[[paste0("format", i)]],
                                       ranges = gr.UCSC), 
                           error = function(e){ 
-                            tryCatch(importScore(file = file.path(datafolder, input[[paste0("file", i)]]),
+                            tryCatch(importScore(ifelse(grepl("\\:\\/\\/", input[[paste0("file", i)]]), 
+                                                        input[[paste0("file", i)]], 
+                                                        file = file.path(datafolder, input[[paste0("file", i)]])),
                                                  format = input[[paste0("format", i)]],
                                                  ranges = gr.NCBI),
                                      error=function(e){NULL})
@@ -378,6 +397,7 @@ server <- function(input, output, session) {
                                 isolate(global$refresh <- FALSE)
                                 filename <- input[[paste0("lollifile", currentIndex)]]
                                 filename <- sub(".gz$", "", filename, ignore.case = TRUE)
+                                
                                 fileext <- tolower(sub("^.*\\.(.*?)$", "\\1", filename))
                                 fileext <- switch(fileext, "bed"="BED", "bg"="bedGraph", "bedgraph"="bedGraph",
                                                   "vcf"="VCF", "csv"="pie.stack.csv", "unknown")
@@ -414,6 +434,135 @@ server <- function(input, output, session) {
      }
    })
    
+   
+   observeEvent(input$addRemote, {
+     isolate(global$fileIndex <- global$fileIndex+1)
+     currentIndex <- global$fileIndex
+     isolate(global$refresh <- FALSE)
+     id = paste0("filecontainer", currentIndex)
+     insertUI(selector = "#add",
+              where = "beforeBegin",
+              ui = tags$div(tagList(
+                tags$h4("Add data track from file"),
+                textInput(paste0("file", currentIndex), label="URL", value = ""),
+                selectInput(paste0("format", currentIndex), label="file format", choices = c("bedGraph"="bedGraph", "BED"="BED", "bigWig"="BigWig", "BAM"="bam")),
+                textInput(paste0("sample", currentIndex), label = "sample name", value = ""),
+                actionButton(inputId = paste0("remove", currentIndex), label="remove above track", icon = icon("remove")),
+                tags$hr()
+              ),
+              id = id)
+     )
+     isolate(global$fileinserted <- c(id, global$fileinserted))
+     if(is.null(global$obsList[[paste0(id,"remove")]])){
+       isolate(global$obsList[[paste0(id,"remove")]] <- observeEvent(input[[paste0("remove", currentIndex)]],
+                                                                     {
+                                                                       isolate(global$refresh <- FALSE)
+                                                                       removeUI(selector = paste0("#", id))
+                                                                       isolate(global$fileinserted <- 
+                                                                                 global$fileinserted[-which(global$fileinserted==id)])
+                                                                     })
+       )
+     }
+     if(is.null(global$obsList[[paste0(id,"fileinput")]])){
+       isolate(global$obsList[[paste0(id,"fileinput")]] <- 
+                 observeEvent(input[[paste0("file", currentIndex)]],
+                              {
+                                isolate(global$refresh <- FALSE)
+                                filename <- input[[paste0("file", currentIndex)]]
+                                filename <- sub(".gz$", "", filename, ignore.case = TRUE)
+                                fileext <- tolower(sub("^.*\\.(.*?)$", "\\1", basename(filename)))
+                                fileext <- switch(fileext, "bed"="BED", "bg"="bedGraph", "bedgraph"="bedGraph",
+                                                  "bigwig"="BigWig", "bw"="BigWig", "bam"="bam", "unknown")
+                                if(fileext!="unknown"){
+                                  updateSelectInput(session, inputId = paste0("format", currentIndex),
+                                                    selected =fileext )
+                                }
+                                filename <- sub(paste0(".", fileext, "$"), "", basename(filename))
+                                updateTextInput(session, inputId = paste0("sample", currentIndex),
+                                                value = filename)
+                              })
+       )
+     }
+   })
+   observeEvent(input$lolliRemote, {
+     isolate(global$lolliIndex <- global$lolliIndex+1)
+     currentIndex <- global$lolliIndex
+     isolate(global$refresh <- FALSE)
+     id = paste0("lollicontainer", currentIndex)
+     insertUI(selector = "#add",
+              where = "beforeBegin",
+              ui = tags$div(tagList(
+                tags$h4("Add lollipop plot track from file"),
+                textInput(paste0("lollifile", currentIndex), label="URL", value = ""),
+                selectInput(paste0("lolliformat", currentIndex), label="file format", choices = c("bedGraph"="bedGraph", "BED"="BED", "VCF"="VCF", "pieStack"="pie.stack.csv")),
+                textInput(paste0("lollisample", currentIndex), label = "sample name", value = ""),
+                selectInput(paste0("lollitype", currentIndex), label = "lollipop plot type", choices = c("circle", "pin", "pie", "dandelion", "pie.stack")),
+                radioButtons(paste0("lolliradio", currentIndex), label = "gene model",
+                             choices = c("none"="none",
+                                         "use TxDb package"="default",
+                                         "load from the following file"="file")),
+                selectInput(paste0("lollitxfile", currentIndex), label="select transcript file",
+                            choices = dir(datafolder, "bed|bedgraph|gff|gtf", ignore.case = TRUE), multiple = FALSE),
+                selectInput(paste0("lollitxformat", currentIndex), label="transcript file format", choices = c("GTF", "GFF", "bedGraph", "BED")),
+                actionButton(inputId = paste0("removelolli", currentIndex), label="remove above track", icon = icon("remove")),
+                tags$hr()
+              ), id=id
+              ))
+     isolate(global$lolliinserted <- c(id, global$lolliinserted))
+     if(is.null(global$obsList[[paste0(id,"remove")]])){
+       isolate(global$obsList[[paste0(id,"remove")]] <- observeEvent(input[[paste0("removelolli", currentIndex)]],
+                                                                     {
+                                                                       isolate(global$refresh <- FALSE)
+                                                                       removeUI(selector = paste0("#", id))
+                                                                       isolate(global$lolliinserted <- 
+                                                                                 global$lolliinserted[-which(global$lolliinserted==id)])
+                                                                     })
+       )
+     }
+     if(is.null(global$obsList[[paste0(id,"lolliinput")]])){
+       isolate(global$obsList[[paste0(id,"lolliinput")]] <- 
+                 observeEvent(input[[paste0("lollifile", currentIndex)]],
+                              {
+                                isolate(global$refresh <- FALSE)
+                                filename <- input[[paste0("lollifile", currentIndex)]]
+                                filename <- sub(".gz$", "", filename, ignore.case = TRUE)
+                                fileext <- tolower(sub("^.*\\.(.*?)$", "\\1", basename(filename)))
+                                fileext <- switch(fileext, "bed"="BED", "bg"="bedGraph", "bedgraph"="bedGraph",
+                                                  "vcf"="VCF", "csv"="pie.stack.csv", "unknown")
+                                if(fileext!="unknown"){
+                                  updateSelectInput(session, inputId = paste0("lolliformat", currentIndex),
+                                                    selected =fileext )
+                                }
+                                filename <- sub(paste0(".", fileext, "$"), "", basename(filename))
+                                updateTextInput(session, inputId = paste0("lollisample", currentIndex),
+                                                value = filename)
+                                if(fileext=="pie.stack.csv"){
+                                  updateSelectInput(session, inputId = paste0("lollitype", currentIndex),
+                                                    selected ="pie.stack" )
+                                }
+                              })
+       )
+     }
+     if(is.null(global$obsList[[paste0(id,"lollitxinput")]])){
+       isolate(global$obsList[[paste0(id,"lollitxinput")]] <- 
+                 observeEvent(input[[paste0("lollitxfile", currentIndex)]],
+                              {
+                                isolate(global$refresh <- FALSE)
+                                filename <- input[[paste0("lollitxfile", currentIndex)]]
+                                filename <- sub(".gz$", "", filename, ignore.case = TRUE)
+                                fileext <- tolower(sub("^.*\\.(.*?)$", "\\1", filename))
+                                fileext <- switch(fileext, "bed"="BED", "bg"="bedGraph", "bedgraph"="bedGraph",
+                                                  "gff"="GFF", "gtf"="GTF", "unknown")
+                                if(fileext!="unknown"){
+                                  updateSelectInput(session, inputId = paste0("lollitxformat", currentIndex),
+                                                    selected =fileext )
+                                }
+                              })
+       )
+     }
+   })
+   
+   
    observeEvent(input$load, {
      output$trackViewer <- 
        renderbrowseTracks({
@@ -422,6 +571,26 @@ server <- function(input, output, session) {
          browseTracks(trackList(A), gr=GRanges(1, IRanges(1, 10000)))
        })
        session$sendCustomMessage(type="loadCallback", 1)
+   })
+   
+   observeEvent(input$zoomin, {
+     #isolate(global$forceRefresh <- TRUE)
+     wid <- floor(abs(input$end - input$start)/5)
+     if(wid>1){
+       start <- min(c(input$start, input$end)) + 2*wid
+       end <- max(c(input$start, input$end)) - 2*wid
+       updateNumericInput(session, inputId = "start", value = start)
+       updateNumericInput(session, inputId = "end", value = end)
+     }
+   })
+   
+   observeEvent(input$zoomout, {
+     #isolate(global$forceRefresh <- TRUE)
+     wid <- abs(input$end - input$start)
+     start <- min(c(input$start, input$end)) - 2*wid
+     end <- max(c(input$start, input$end)) + 2*wid
+     updateNumericInput(session, inputId = "start", value = start)
+     updateNumericInput(session, inputId = "end", value = end)
    })
    
    observeEvent(input$preSet1, {
